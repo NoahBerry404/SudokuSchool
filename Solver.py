@@ -1,30 +1,43 @@
-class Cell:
-    # Initiate a new cell
-    def __init__(self, value: int, candidates: list[bool], numCandidates: int):
-        # Unsolved cells have a value of 0
-        self.value = value
-        # Candidates is a list with size 9, with each element representing the candidates 1-9 (index + 1)
-        self.candidates = candidates.copy()
-        self.numCandidates = numCandidates
-    # Remove a candidate from a cell
-    def removeCandidate(self, candidate: int):
-        if self.candidates[candidate-1] == True:
-            self.candidates[candidate-1] = False
-            self.numCandidates -= 1
-        else:
-            raise Exception("ERROR: Tried to remove nonexistent candidate.")
-    # Solve a cell
-    def solveCell(self):
-        if self.numCandidates == 1:
-            count = 0
-            for candidateBool in self.candidates:
-                if candidateBool == True:
-                    self.value = count + 1
-                    break
-                count += 1
-            if self.value == 0:
-                raise Exception("ERROR: numCandidates is 1, but no candidates found")
-        elif self.numCandidates > 1:
-            raise Exception("ERROR: Tried to solve a cell with multiple candidates.")
-        else:
-            raise Exception("ERROR: Cell has less than 1 candidate.")
+from Classes import *
+
+# Sets a puzzle cell's value and updates the affected cell's candidates
+def insertCellValue(puzzle, val, col, row):
+    targetCell = puzzle.getCell(col, row)
+    targetCell.setCell(val)
+    for cell in targetCell.col.members:
+        if cell != targetCell:
+            cell.removeCandidate(val)
+    for cell in targetCell.row.members:
+        if cell != targetCell:
+            cell.removeCandidate(val)
+    for cell in targetCell.sec.members:
+        if cell != targetCell:
+            cell.removeCandidate(val)
+
+# Testing Code (Using 4/27/25 NYT Daily Hard Crossword)
+testPuzzle = Puzzle()
+insertCellValue(testPuzzle, 4, 1, 0)
+insertCellValue(testPuzzle, 2, 1, 1)
+insertCellValue(testPuzzle, 4, 3, 1)
+insertCellValue(testPuzzle, 3, 5, 1)
+insertCellValue(testPuzzle, 6, 7, 1)
+insertCellValue(testPuzzle, 8, 0, 2)
+insertCellValue(testPuzzle, 7, 4, 2)
+insertCellValue(testPuzzle, 4, 6, 2)
+insertCellValue(testPuzzle, 1, 8, 2)
+insertCellValue(testPuzzle, 3, 0, 3)
+insertCellValue(testPuzzle, 9, 1, 4)
+insertCellValue(testPuzzle, 8, 3, 4)
+insertCellValue(testPuzzle, 6, 5, 4)
+insertCellValue(testPuzzle, 6, 0, 5)
+insertCellValue(testPuzzle, 1, 2, 5)
+insertCellValue(testPuzzle, 2, 7, 5)
+insertCellValue(testPuzzle, 4, 8, 5)
+insertCellValue(testPuzzle, 8, 1, 6)
+insertCellValue(testPuzzle, 9, 2, 6)
+insertCellValue(testPuzzle, 7, 6, 7)
+insertCellValue(testPuzzle, 9, 8, 7)
+insertCellValue(testPuzzle, 8, 4, 8)
+insertCellValue(testPuzzle, 6, 8, 8)
+testPuzzle.printPuzzle()
+testPuzzle.printPuzzleCandidates()
