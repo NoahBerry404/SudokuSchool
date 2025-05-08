@@ -58,3 +58,60 @@ def checkSoleOccurrence(puzzle: Puzzle, solveFlag: bool) -> list[SoleOccurrenceI
     if information and solveFlag:
         information[0].processInfo()
     return information
+
+# Checks the provided puzzle for situations where all of a group's cells that have
+# a certain value as a candidate share another group in common
+# Will update puzzle with new found information if solveFlag is True
+def checkOverlap(puzzle: Puzzle, solveFlag: bool) -> list[OverlapInfo]:
+    information = []
+    for val in range(1, 10):
+        for column in puzzle.cols:
+            colCandidateCells = column.getCandidateCells(val)
+            if len(colCandidateCells) < 2:
+                continue
+            exampleCell = colCandidateCells[0]
+            currentSec = exampleCell.sec
+            if all(currentCell.sec == colCandidateCells[0].sec for currentCell in colCandidateCells[1:]):
+                infoDict = {}
+                for currentCell in currentSec.members:
+                    if currentCell.col != exampleCell.col and currentCell.candidates[val-1] == True:
+                        infoDict[currentCell] = val
+                if infoDict:
+                    information.append(OverlapInfo(colCandidateCells, infoDict))
+        for row in puzzle.rows:
+            rowCandidateCells = row.getCandidateCells(val)
+            if len(rowCandidateCells) < 2:
+                continue
+            exampleCell = rowCandidateCells[0]
+            currentSec = exampleCell.sec
+            if all(currentCell.sec == rowCandidateCells[0].sec for currentCell in rowCandidateCells[1:]):
+                infoDict = {}
+                for currentCell in currentSec.members:
+                    if currentCell.row != exampleCell.row and currentCell.candidates[val-1] == True:
+                        infoDict[currentCell] = val
+                if infoDict:
+                    information.append(OverlapInfo(rowCandidateCells, infoDict))
+        for section in puzzle.secs:
+            secCandidateCells = section.getCandidateCells(val)
+            if len(secCandidateCells) < 2:
+                continue
+            exampleCell = secCandidateCells[0]
+            currentCol = exampleCell.col
+            currentRow = exampleCell.row
+            if all(cell.col == currentCol for cell in secCandidateCells[1:]):
+                infoDict = {}
+                for currentCell in currentCol.members:
+                    if currentCell.sec != exampleCell.sec and currentCell.candidates[val-1] == True:
+                        infoDict[currentCell] = val
+                if infoDict:
+                    information.append(OverlapInfo(secCandidateCells, infoDict))
+            if all(cell.row == currentRow for cell in secCandidateCells[1:]):
+                infoDict = {}
+                for currentCell in currentRow.members:
+                    if currentCell.sec != exampleCell.sec and currentCell.candidates[val-1] == True:
+                        infoDict[currentCell] = val
+                if infoDict:
+                    information.append(OverlapInfo(secCandidateCells, infoDict))
+    if information and solveFlag:
+        information[0].processInfo()
+    return information

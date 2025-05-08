@@ -3,7 +3,8 @@ class Cell:
     def __init__(self, column: object, row: object, section: object):
         # Unsolved cells have a value of 0
         self.value = 0
-        # candidates is a list with size 9, with each element representing the candidacy of numbers 1-9
+        # candidates is a list the tracks which values are potential candidates for the cell
+        # Each element represents the value of its index plus one (eg. index of 0 represents a value of 1)
         self.candidates = [True] * 9
         self.numCandidates = 9
         # Column that the cell belongs to
@@ -20,6 +21,9 @@ class Cell:
         self.candidates = [False] * 9
         self.numCandidates = 0
         for group in [self.col, self.row, self.sec]:
+            if group.values[value-1] == True:
+                raise Exception("Group already contains new value")
+            group.values[value-1] = True
             if group.numSolved == 9:
                 raise Exception("Group is already solved")
             group.numSolved += 1
@@ -44,18 +48,21 @@ class Cell:
         else:
             print(self.value, end=" ")
     # Print one line of a Cell's Candidates
-    def printCandidateLine(self, line: int):
+    def printCandidateLine(self, line: int, printSolved: bool):
         for i in range(3):
                 if self.value != 0:
-                    print(self.value, end=" ")
+                    if printSolved:
+                        print(self.value, end=" ")
+                    else:
+                        print(" ", end=" ")
                 elif self.candidates[line*3+i] == False:
                     print(" ", end=" ")
                 else:
                     print(line*3+i+1, end=" ")
     # Print all of a Cell's Candidates
-    def printCandidates(self):
+    def printCandidates(self, printSolved: bool):
         for i in range(3):
-            self.printCandidateLine(i)
+            self.printCandidateLine(i, printSolved)
             print()
 
 class Group:
@@ -65,6 +72,9 @@ class Group:
         self.puzzle = puzzle
         # List of 9 Ordered cells in the group, ordered top to bottom for a column, ordered left to right for a row, and ordered like reading a book for a section
         self.members = []
+        # values is a list the tracks which values are solved in the group
+        # Each element represents the value of its index plus one (eg. index of 0 represents a value of 1)
+        self.values = [False] * 9
         # The number of cells in the group that are solved
         self.numSolved = 0
         # The index of the group in puzzle
@@ -144,11 +154,11 @@ class Puzzle:
                 print("----------------------")
         print("\n\n")
     # Print the puzzle's cell candidates (Solved cells show their value as all of their candidates)
-    def printPuzzleCandidates(self):
+    def printPuzzleCandidates(self, printSolved: bool):
         for i in range(27):
             for j in range(9):
                 currentCell = self.getCell(j, i // 3)
-                currentCell.printCandidateLine(i%3)
+                currentCell.printCandidateLine(i%3, printSolved)
                 if j % 3 == 2 and j != 8:
                     print("|", end=" ")
             print()
@@ -183,3 +193,8 @@ class SoleOccurrenceInfo(Info):
         cell = list(self.results.keys())[0]
         value = self.results[cell]
         cell.setCell(value)
+
+class OverlapInfo(Info):
+    def processInfo(self):
+        for cell in self.results:
+            cell.removeCandidate(self.results[cell])
