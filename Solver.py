@@ -10,15 +10,9 @@ def checkBasic(puzzle: Puzzle, solveFlag: bool) -> list[BasicInfo]:
                 val = cell.value
                 infoDict = {}
                 # Check every cell in the relevant groups, add to infoDict if a candidate should be removed
-                for groupMate in cell.col.members:
+                for groupMate in cell.col.members + cell.row.members + cell.sec.members:
                     if groupMate.candidates[val-1] == True:
-                        infoDict[groupMate] = val
-                for groupMate in cell.row.members:
-                    if groupMate.candidates[val-1] == True:
-                        infoDict[groupMate] = val
-                for groupMate in cell.sec.members:
-                    if groupMate.candidates[val-1] == True:
-                        infoDict[groupMate] = val
+                        infoDict[groupMate] = [val]
                 # Add new Info object to information if new info was found
                 if len(infoDict) > 0:
                     information.append(BasicInfo([cell], infoDict))
@@ -40,7 +34,7 @@ def checkSoloCandidate(puzzle: Puzzle, solveFlag: bool) -> list[SoloCandidateInf
                         break
                 if val == 0:
                     raise Exception("No Candidate Found")
-                information.append(SoloCandidateInfo([cell], {cell:val}))
+                information.append(SoloCandidateInfo([cell], {cell:[val]}))
     if information and solveFlag:
         information[0].processInfo()
     return information
@@ -53,7 +47,7 @@ def checkSoleOccurrence(puzzle: Puzzle, solveFlag: bool) -> list[SoleOccurrenceI
         for val in range(1, 10):
             cellList = group.getCandidateCells(val)
             if len(cellList) == 1:
-                newInfo = SoleOccurrenceInfo(group.members, {cellList[0]:val})
+                newInfo = SoleOccurrenceInfo(group.members, {cellList[0]:[val]})
                 information.append(newInfo)
     if information and solveFlag:
         information[0].processInfo()
@@ -75,7 +69,7 @@ def checkOverlap(puzzle: Puzzle, solveFlag: bool) -> list[OverlapInfo]:
                 infoDict = {}
                 for currentCell in currentSec.members:
                     if currentCell.col != exampleCell.col and currentCell.candidates[val-1] == True:
-                        infoDict[currentCell] = val
+                        infoDict[currentCell] = [val]
                 if infoDict:
                     information.append(OverlapInfo(colCandidateCells, infoDict))
         for row in puzzle.rows:
@@ -88,7 +82,7 @@ def checkOverlap(puzzle: Puzzle, solveFlag: bool) -> list[OverlapInfo]:
                 infoDict = {}
                 for currentCell in currentSec.members:
                     if currentCell.row != exampleCell.row and currentCell.candidates[val-1] == True:
-                        infoDict[currentCell] = val
+                        infoDict[currentCell] = [val]
                 if infoDict:
                     information.append(OverlapInfo(rowCandidateCells, infoDict))
         for section in puzzle.secs:
@@ -102,16 +96,62 @@ def checkOverlap(puzzle: Puzzle, solveFlag: bool) -> list[OverlapInfo]:
                 infoDict = {}
                 for currentCell in currentCol.members:
                     if currentCell.sec != exampleCell.sec and currentCell.candidates[val-1] == True:
-                        infoDict[currentCell] = val
+                        infoDict[currentCell] = [val]
                 if infoDict:
                     information.append(OverlapInfo(secCandidateCells, infoDict))
             if all(cell.row == currentRow for cell in secCandidateCells[1:]):
                 infoDict = {}
                 for currentCell in currentRow.members:
                     if currentCell.sec != exampleCell.sec and currentCell.candidates[val-1] == True:
-                        infoDict[currentCell] = val
+                        infoDict[currentCell] = [val]
                 if infoDict:
                     information.append(OverlapInfo(secCandidateCells, infoDict))
+    if information and solveFlag:
+        information[0].processInfo()
+    return information
+ 
+# Checks the provided puzzle's candidates for each group. If two different values are only
+# viable for the same two cells in a group, those cells cannot have any other value as a candidate.
+# Will update puzzle with new found information if solveFlag is True
+def checkHiddenPair(puzzle: Puzzle, solveFlag: bool) -> list[HiddenPairInfo]:
+    information = []
+    for group in puzzle.cols + puzzle.rows + puzzle.secs:
+        pairs = [{}] * 9
+        for val in range(1, 10):
+            candidateCells = group.getCandidateCells(val)
+            # If value is only a candidate in two cells of a group
+            if len(candidateCells) == 2:
+                # If a candidate has already been found for
+                match group.type:
+                    case "col":
+                        group1 = candidateCells[0].col.groupNum
+                        group2 = candidateCells[1].col.groupNum
+                    case "row":
+                        group1 = candidateCells[0].row.groupNum
+                        group2 = candidateCells[1].row.groupNum
+                    case "sec":
+                        group1 = candidateCells[0].sec.groupNum
+                        group2 = candidateCells[1].sec.groupNum
+                prevValue = pairs[group1].get(group2)
+                if prevValue != None:
+                    infoDict = {}
+                    nakedPair = [False] * 9
+                    nakedPair[val-1] = True
+                    nakedPair[prevValue-1] = True
+                    for cell in candidateCells:
+                        invalidCandidates = []
+                        for i in range(9):
+                            if cell.candidates[i] != nakedPair[i]:
+                                invalidCandidates.append(i+1)
+                        # If invalid candidates found
+                        if invalidCandidates:
+                            infoDict[cell] = invalidCandidates
+                    # If new information found
+                    if infoDict:
+                        information.append(HiddenPairInfo(group.members, infoDict))
+                else:
+                    pairs[group1][group2] = val
+                    pairs[group2][group1] = val
     if information and solveFlag:
         information[0].processInfo()
     return information
