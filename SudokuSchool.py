@@ -1,10 +1,10 @@
 from Solver import *
 from TestPuzzles import testPuzzle, testPuzzle2
 
-def processPuzzle(puzzle: Puzzle):
-    print("Starting Values:")
-    puzzle.printPuzzle()
-    print()
+def processPuzzle(unsolvedPuzzle: Puzzle):
+    puzzle = unsolvedPuzzle.copyPuzzle()
+    outputString = ""
+    outputString += "Starting Values:\n" + puzzle.printPuzzle() + "\n"
     newInfoFound = True
     while newInfoFound:
         newInfo = []
@@ -20,11 +20,17 @@ def processPuzzle(puzzle: Puzzle):
         hidPairInfo = checkHiddenPair(puzzle, False)
         newInfo += hidPairInfo
         if newInfo:
-            newInfo[0].printInfo()
+            outputString += newInfo[0].printInfo()
             newInfo[0].processInfo()
             newInfoFound = True
-            puzzle.printPuzzle()
-            puzzle.printPuzzleCandidates(True)
-            print()
+            outputString += puzzle.printPuzzle()
+            outputString += puzzle.printPuzzleCandidates(False)
+            outputString += "\n"
+    if puzzle.isSolved:
+        outputString += "Puzzle is Solved, Valid Solution = " + str(puzzle.validateSolution(testPuzzle2)) + "."
+    else:
+        outputString += "Puzzle is not solved."
+    with open("SudokuSchoolOutput.txt", 'w') as file:
+        file.write(outputString)
 
 processPuzzle(testPuzzle2)

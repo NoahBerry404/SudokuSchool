@@ -1,6 +1,6 @@
 class Cell:
     # Initiate a new cell. Cells will be unsolved and have all candidates possible by default
-    def __init__(self, column: object, row: object, section: object):
+    def __init__(self, column: 'Group', row: 'Group', section: 'Group'):
         # Unsolved cells have a value of 0
         self.value = 0
         # candidates is a list the tracks which values are potential candidates for the cell
@@ -34,6 +34,8 @@ class Cell:
                 if puzzle.solvedGroups == 27:
                     raise Exception("Puzzle is already solved")
                 puzzle.solvedGroups += 1
+                if puzzle.solvedGroups == 27:
+                    puzzle.isSolved = True
     # Set a cell's candidates field
     def setCandidates(self, candidates: list[bool]):
         count = 0
@@ -53,36 +55,42 @@ class Cell:
             self.numCandidates -= 1
         elif strict:
             raise Exception("Tried to remove nonexistent candidate.")
-    # Print a Cell's Value
-    def printCell(self):
+    # Returns a string representing a cell's value
+    def printCell(self) -> str:
+        cellString = ""
         if self.value == 0:
-            print("_", end=" ")
+            cellString += "_"
         else:
-            print(self.value, end=" ")
-    # Print one line of a Cell's Candidates
-    def printCandidateLine(self, line: int, printSolved: bool):
+            cellString += str(self.value)
+        cellString += " "
+        return cellString
+    # Returns a string representing a line of a cell's candidates
+    def printCandidateLine(self, line: int, printSolved: bool) -> str:
+        candidateString = ""
         for i in range(3):
                 if self.value != 0:
                     if printSolved:
                         if line == 1 and i == 1:
-                            print(self.value, end=" ")
+                            candidateString += str(self.value) + " "
                         else:
-                            print("*", end=" ")
+                            candidateString += "* "
                     else:
-                        print(" ", end=" ")
+                        candidateString += "_ "
                 elif self.candidates[line*3+i] == False:
-                    print(" ", end=" ")
+                    candidateString += "_ "
                 else:
-                    print(line*3+i+1, end=" ")
+                    candidateString += str(line*3+i+1) + " "
+        return candidateString
     # Print all of a Cell's Candidates
     def printCandidates(self, printSolved: bool):
+        candidateString = ""
         for i in range(3):
-            self.printCandidateLine(i, printSolved)
-            print()
+            candidateString += self.printCandidateLine(i, printSolved) + "\n"
+        return candidateString
 
 class Group:
     # Initiate a new group, the super class for Column, Row, and Section
-    def __init__(self, puzzle: object, groupNum: int, type: str):
+    def __init__(self, puzzle: 'Puzzle', groupNum: int, type: str):
         # Puzzle that the group belongs to
         self.puzzle = puzzle
         # List of 9 Ordered cells in the group, ordered top to bottom for a column, ordered left to right for a row, and ordered like reading a book for a section
@@ -109,23 +117,28 @@ class Group:
         raise NotImplementedError("Subclasses must implement this method")
 
 class Column(Group):
-    def printGroup(self):
+    def printGroup(self) -> str:
+        colString = ""
         for cell in self.members:
-            cell.printCell()
-            print()
+            groupString += cell.printCell() + "\n"
+        return colString
 
 class Row(Group):
-    def printGroup(self):
+    def printGroup(self) -> str:
+        rowString = ""
         for cell in self.members:
-            cell.printCell()
-        print()
+            rowString += cell.printCell()
+        rowString += "\n"
+        return rowString
 
 class Section(Group):
-    def printGroup(self):
+    def printGroup(self) -> str:
+        secString = ""
         for cell in self.members:
-            cell.printCell()
+            secString += cell.printCell()
             if cell.col.groupNum > 0 and cell.col.groupNum % 3 == 0:
-                print()
+                secString += "\n"
+        return secString
 
 class Puzzle:
     # Initialize a new puzzle and set up with columns, rows, and sections containing default cells
@@ -135,6 +148,7 @@ class Puzzle:
         self.secs = []
         # solvedGroups is used to check if the puzzle is complete
         self.solvedGroups = 0
+        self.isSolved = False
         for i in range(9):
             self.rows.append(Row(self, i, "row"))
             self.cols.append(Column(self, i, "col"))
@@ -157,33 +171,71 @@ class Puzzle:
     def setCellValue(self, val: int, col: int, row: int):
         targetCell = self.getCell(col, row)
         targetCell.setCell(val)
-    # Print the puzzle's solved cells
-    def printPuzzle(self):
+    # Makes a copy of a puzzles original values
+    def copyPuzzle(target: 'Puzzle') -> 'Puzzle':
+        newPuzzle = Puzzle()
+        for i in range(9):
+            row = target.rows[i]
+            newRow = newPuzzle.rows[i]
+            for j in range(9):
+                cell = row.members[j]
+                newCell = newRow.members[j]
+                if cell.value != 0:
+                    newCell.setCell(cell.value)
+        return newPuzzle
+    # Checks that a puzzle is a solution of original
+    def validateSolution(self, original: 'Puzzle'):
+        if self.isSolved == False:
+            raise Exception("Puzzle is not solved")
+        for group in self.cols + self.rows + self.secs:
+            valueCheck = [False] * 9
+            for cell in group.members:
+                if cell.value == 0:
+                    return False
+                valueCheck[cell.value-1] = True
+            if valueCheck != [True] * 9:
+                return False
+        for i in range(9):
+            solvedRow = self.rows[i]
+            unsolvedRow = original.rows[i]
+            for j in range(9):
+                solvedCell = solvedRow.members[j]
+                unsolvedCell = unsolvedRow.members[j]
+                if unsolvedCell.value != 0 and solvedCell.value != unsolvedCell.value:
+                    return False
+        return True
+
+    # Print the puzzle's solved cells and returns it as a string
+    def printPuzzle(self) -> str:
+        puzzleString = ""
         for i in range(81):
             currentCol = i % 9
             currentRow = i // 9
             currentCell = self.getCell(currentCol, currentRow)
-            currentCell.printCell()
+            puzzleString += currentCell.printCell()
             if currentCol == 8:
-                print()
+                puzzleString += "\n"
             if currentCol % 3 == 2 and currentCol != 8:
-                print("|", end=" ")
+                puzzleString += "| "
             elif currentRow % 3 == 2 and currentCol == 8 and currentRow != 8:
-                print("----------------------")
-        print("\n\n")
+                puzzleString += "----------------------\n"
+        puzzleString += "\n\n"
+        return puzzleString
     # Print the puzzle's cell candidates (Solved cells show their value as all of their candidates)
     def printPuzzleCandidates(self, printSolved: bool):
+        candidateString = ""
         for i in range(27):
             for j in range(9):
                 currentCell = self.getCell(j, i // 3)
-                currentCell.printCandidateLine(i%3, printSolved)
+                candidateString += currentCell.printCandidateLine(i%3, printSolved)
                 if j % 3 == 2 and j != 8:
-                    print("|", end=" ")
-            print()
+                    candidateString += "| "
+            candidateString += "\n"
             if i % 9 == 8 and i != 26:
-                print("----------------------------------------------------------")
-        print("\n\n")
- 
+                candidateString += "----------------------------------------------------------\n"
+        candidateString += "\n\n"
+        return candidateString
+
 class Info:
     # Create a new Info object, the superclass for the sudoku info subclasses
     def __init__(self, sources: list[object], results: dict[Cell, list[int]]):
@@ -195,70 +247,77 @@ class Info:
     # Print the details of the learned info
     def printInfo(self):
         raise NotImplementedError("Subclasses must implement this method")
- 
+
 class BasicInfo(Info):
     def processInfo(self):
         for cell in self.results:
             cell.removeCandidate(self.results[cell][0])
-    def printInfo(self):
+    def printInfo(self) -> str:
+        infoString = ""
         cell = self.sources[0]
-        print("BASIC: The cell at (" + str(cell.col.groupNum) + ", " + str(cell.row.groupNum) + ") (column, row) is solved for a value of " + str(cell.value) + ".")
-        i = 0
+        infoString += "BASIC: The cell at (" + str(cell.col.groupNum + 1) + ", " + str(cell.row.groupNum + 1) + ") (column, row) is solved for a value of " + str(cell.value) + ".\n"
         length = len(self.results)
-        print("This means that the cell", end="")
+        infoString += "This means that the cell"
         if length > 1:
-            print("s", end="")
-        print(" at ", end="")
+            infoString += "s"
+        infoString += " at "
+        i = 0
         for ineligibleCell in self.results:
             if i != 0:
-                print(", ", end="")
+                infoString += ", "
                 if i == length-1:
-                    print("and ", end="")
-            print("(" + str(ineligibleCell.col.groupNum) + ", " + str(ineligibleCell.row.groupNum) + ")", end="")
-        print(" cannot have " + str(cell.value) + " as a candidate.")
- 
+                    infoString += "and "
+            infoString += "(" + str(ineligibleCell.col.groupNum + 1) + ", " + str(ineligibleCell.row.groupNum + 1) + ")"
+            i += 1
+        infoString += " cannot have " + str(cell.value) + " as a candidate.\n"
+        return infoString
+
 class SoloCandidateInfo(Info):
     def processInfo(self):
         # There will always be only one entry in this dictionary
         cell = list(self.results.keys())[0]
         value = self.results[cell][0]
         cell.setCell(value)
-    def printInfo(self):
+    def printInfo(self) -> str:
+        infoString = ""
         cell = list(self.results.keys())[0]
         val = self.results[cell][0]
-        print("SOLO CANDIDATE: The cell at (" + str(cell.col.groupNum) + ", " + str(cell.row.groupNum) + ") (column, row) has " + str(val) + " as its only Candidate.")
-        print("This means that " + str(val) + " is the cell's solution.")
- 
+        infoString += "SOLO CANDIDATE: The cell at (" + str(cell.col.groupNum + 1) + ", " + str(cell.row.groupNum + 1) + ") (column, row) has " + str(val) + " as its only Candidate.\n"
+        infoString += "This means that " + str(val) + " is the cell's solution.\n"
+        return infoString
+
 class SoleOccurrenceInfo(Info):
     def processInfo(self):
         # There will always be only one entry in this dictionary
         cell = list(self.results.keys())[0]
         value = self.results[cell][0]
         cell.setCell(value)
-    def printInfo(self):
+    def printInfo(self) -> str:
+        infoString = ""
         cell = list(self.results.keys())[0]
         val = self.results[cell][0]
-        print("SOLE OCCURRENCE: The cell at (" + str(cell.col.groupNum) + ", " + str(cell.row.groupNum) + ") (column, row) is the only cell in ", end="")
+        infoString += "SOLE OCCURRENCE: The cell at (" + str(cell.col.groupNum + 1) + ", " + str(cell.row.groupNum + 1) + ") (column, row) is the only cell in "
         if(all(currentCell.col == self.sources[0].col for currentCell in self.sources[1:])):
-            print("column " + str(self.sources[0].col.groupNum), end="")
+            infoString += "column " + str(self.sources[0].col.groupNum + 1)
         elif(all(currentCell.row == self.sources[0].row for currentCell in self.sources[1:])):
-            print("row " + str(self.sources[0].row.groupNum), end="")
+            infoString += "row " + str(self.sources[0].row.groupNum + 1)
         else:
-            print("section " + str(self.sources[0].sec.groupNum), end="")
-        print(" with " + str(val) + " as an eligible candidate.")
-        print("This means that " + str(val) + " is the cell's solution.")
- 
+            infoString += "section " + str(self.sources[0].sec.groupNum + 1)
+        infoString += " with " + str(val) + " as an eligible candidate.\n"
+        infoString += "This means that " + str(val) + " is the cell's solution.\n"
+        return infoString
+
 class OverlapInfo(Info):
     def processInfo(self):
         for cell in self.results:
             cell.removeCandidate(self.results[cell][0])
-    def printInfo(self):
-        print("Overlap printInfo is currently unimplemented.")
- 
+    def printInfo(self) -> str:
+        return "Overlap printInfo is currently unimplemented.\n"
+
 class HiddenPairInfo(Info):
     def processInfo(self):
         for cell in self.results:
             for candidate in self.results[cell]:
                 cell.removeCandidate(candidate)
-    def printInfo(self):
-        print("Hidden Pair printInfo is currently unimplemented.")
+    def printInfo(self) -> str:
+        return "Hidden Pair printInfo is currently unimplemented.\n"
