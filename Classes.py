@@ -55,6 +55,17 @@ class Cell:
             self.numCandidates -= 1
         elif strict:
             raise Exception("Tried to remove nonexistent candidate.")
+    # Returns a cell's parent group of the same type as targetGroup
+    def getSameGroupType(self, targetGroup: 'Group') -> 'Group':
+        match targetGroup.type:
+            case "col":
+                return self.col
+            case "row":
+                return self.row
+            case "sec":
+                return self.sec
+            case _:
+                raise Exception("Invalid Group Type")
     # Returns a string representing a cell's value
     def printCell(self) -> str:
         cellString = ""
@@ -87,6 +98,9 @@ class Cell:
         for i in range(3):
             candidateString += self.printCandidateLine(i, printSolved) + "\n"
         return candidateString
+    # Returns a string with the location of the cell in the puzzle in "(col, row)" format
+    def printLocation(self) -> str:
+        return "(" + str(self.col.groupNum+1) + ", " + str(self.row.groupNum+1) + ")"
 
 class Group:
     # Initiate a new group, the super class for Column, Row, and Section
@@ -122,6 +136,8 @@ class Column(Group):
         for cell in self.members:
             groupString += cell.printCell() + "\n"
         return colString
+    def printType(self) -> str:
+        return "column"
 
 class Row(Group):
     def printGroup(self) -> str:
@@ -130,6 +146,8 @@ class Row(Group):
             rowString += cell.printCell()
         rowString += "\n"
         return rowString
+    def printType(self) -> str:
+        return "row"
 
 class Section(Group):
     def printGroup(self) -> str:
@@ -139,6 +157,8 @@ class Section(Group):
             if cell.col.groupNum > 0 and cell.col.groupNum % 3 == 0:
                 secString += "\n"
         return secString
+    def printType(self) -> str:
+        return "section"
 
 class Puzzle:
     # Initialize a new puzzle and set up with columns, rows, and sections containing default cells
@@ -202,9 +222,9 @@ class Puzzle:
                 solvedCell = solvedRow.members[j]
                 unsolvedCell = unsolvedRow.members[j]
                 if unsolvedCell.value != 0 and solvedCell.value != unsolvedCell.value:
+                    print(original.printPuzzle())
                     return False
         return True
-
     # Print the puzzle's solved cells and returns it as a string
     def printPuzzle(self) -> str:
         puzzleString = ""
@@ -255,7 +275,7 @@ class BasicInfo(Info):
     def printInfo(self) -> str:
         infoString = ""
         cell = self.sources[0]
-        infoString += "BASIC: The cell at (" + str(cell.col.groupNum + 1) + ", " + str(cell.row.groupNum + 1) + ") (column, row) is solved for a value of " + str(cell.value) + ".\n"
+        infoString += "BASIC: The cell at " + cell.printLocation() + " (column, row) is solved for a value of " + str(cell.value) + ".\n"
         length = len(self.results)
         infoString += "This means that the cell"
         if length > 1:
@@ -264,10 +284,13 @@ class BasicInfo(Info):
         i = 0
         for ineligibleCell in self.results:
             if i != 0:
-                infoString += ", "
+                if length > 2:
+                    infoString += ","
                 if i == length-1:
-                    infoString += "and "
-            infoString += "(" + str(ineligibleCell.col.groupNum + 1) + ", " + str(ineligibleCell.row.groupNum + 1) + ")"
+                    infoString += " and "
+                else:
+                    infoString += " "
+            infoString += ineligibleCell.printLocation()
             i += 1
         infoString += " cannot have " + str(cell.value) + " as a candidate.\n"
         return infoString
@@ -282,7 +305,7 @@ class SoloCandidateInfo(Info):
         infoString = ""
         cell = list(self.results.keys())[0]
         val = self.results[cell][0]
-        infoString += "SOLO CANDIDATE: The cell at (" + str(cell.col.groupNum + 1) + ", " + str(cell.row.groupNum + 1) + ") (column, row) has " + str(val) + " as its only Candidate.\n"
+        infoString += "SOLO CANDIDATE: The cell at " + cell.printLocation() + " (column, row) has " + str(val) + " as its only Candidate.\n"
         infoString += "This means that " + str(val) + " is the cell's solution.\n"
         return infoString
 
@@ -296,7 +319,7 @@ class SoleOccurrenceInfo(Info):
         infoString = ""
         cell = list(self.results.keys())[0]
         val = self.results[cell][0]
-        infoString += "SOLE OCCURRENCE: The cell at (" + str(cell.col.groupNum + 1) + ", " + str(cell.row.groupNum + 1) + ") (column, row) is the only cell in "
+        infoString += "SOLE OCCURRENCE: The cell at " + cell.printLocation() + " (column, row) is the only cell in "
         if(all(currentCell.col == self.sources[0].col for currentCell in self.sources[1:])):
             infoString += "column " + str(self.sources[0].col.groupNum + 1)
         elif(all(currentCell.row == self.sources[0].row for currentCell in self.sources[1:])):
@@ -312,7 +335,49 @@ class OverlapInfo(Info):
         for cell in self.results:
             cell.removeCandidate(self.results[cell][0])
     def printInfo(self) -> str:
-        return "Overlap printInfo is currently unimplemented.\n"
+        infoString = ""
+        infoString += "OVERLAP: The cells at "
+        numSrcCells = len(self.sources) - 1
+        for i in range(numSrcCells):
+            if i != 0:
+                if numSrcCells > 2:
+                    infoString += ","
+                if i == numSrcCells-1:
+                    infoString += " and "
+                else:
+                    infoString += " "
+            infoString += self.sources[i+1].printLocation()
+        infoString += " (column, row) are the only cells in "
+        srcGroup = self.sources[0]
+        infoString += srcGroup.printType()
+        candidate = self.results[list(self.results.keys())[0]][0]
+        infoString += " " + str(srcGroup.groupNum + 1) + " with " + str(candidate) + " as a candidate.\n"
+        infoString += "Since these cells are in the same "
+        if srcGroup.type == "sec":
+            if self.sources[1].col == self.sources[2].col:
+                infoType = "column"
+            else:
+                infoType = "row"
+        else:
+            infoType = "section"
+        infoString += infoType + ", the candidate " + str(candidate) + " is removed from the cell"
+        numResults = len(self.results)
+        if numResults > 1:
+            infoString += "s"
+        infoString += " at "
+        i = 0
+        for key in self.results:
+            if i != 0:
+                if numResults > 2:
+                    infoString += ","
+                if i == numResults-1:
+                    infoString += " and "
+                else:
+                    infoString += " "
+            infoString += key.printLocation()
+            i += 1
+        infoString += ".\n"
+        return infoString
 
 class HiddenPairInfo(Info):
     def processInfo(self):

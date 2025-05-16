@@ -59,53 +59,29 @@ def checkSoleOccurrence(puzzle: Puzzle, solveFlag: bool) -> list[SoleOccurrenceI
 def checkOverlap(puzzle: Puzzle, solveFlag: bool) -> list[OverlapInfo]:
     information = []
     for val in range(1, 10):
-        for column in puzzle.cols:
-            colCandidateCells = column.getCandidateCells(val)
-            if len(colCandidateCells) < 2:
+        for candidateGroup in puzzle.cols + puzzle.rows + puzzle.secs:
+            candidateCells = candidateGroup.getCandidateCells(val)
+            numCandidates = len(candidateCells)
+            if numCandidates < 2 or numCandidates > 3:
                 continue
-            exampleCell = colCandidateCells[0]
-            currentSec = exampleCell.sec
-            if all(currentCell.sec == colCandidateCells[0].sec for currentCell in colCandidateCells[1:]):
-                infoDict = {}
-                for currentCell in currentSec.members:
-                    if currentCell.col != exampleCell.col and currentCell.candidates[val-1] == True:
-                        infoDict[currentCell] = [val]
-                if infoDict:
-                    information.append(OverlapInfo(colCandidateCells, infoDict))
-        for row in puzzle.rows:
-            rowCandidateCells = row.getCandidateCells(val)
-            if len(rowCandidateCells) < 2:
-                continue
-            exampleCell = rowCandidateCells[0]
-            currentSec = exampleCell.sec
-            if all(currentCell.sec == rowCandidateCells[0].sec for currentCell in rowCandidateCells[1:]):
-                infoDict = {}
-                for currentCell in currentSec.members:
-                    if currentCell.row != exampleCell.row and currentCell.candidates[val-1] == True:
-                        infoDict[currentCell] = [val]
-                if infoDict:
-                    information.append(OverlapInfo(rowCandidateCells, infoDict))
-        for section in puzzle.secs:
-            secCandidateCells = section.getCandidateCells(val)
-            if len(secCandidateCells) < 2:
-                continue
-            exampleCell = secCandidateCells[0]
-            currentCol = exampleCell.col
-            currentRow = exampleCell.row
-            if all(cell.col == currentCol for cell in secCandidateCells[1:]):
-                infoDict = {}
-                for currentCell in currentCol.members:
-                    if currentCell.sec != exampleCell.sec and currentCell.candidates[val-1] == True:
-                        infoDict[currentCell] = [val]
-                if infoDict:
-                    information.append(OverlapInfo(secCandidateCells, infoDict))
-            if all(cell.row == currentRow for cell in secCandidateCells[1:]):
-                infoDict = {}
-                for currentCell in currentRow.members:
-                    if currentCell.sec != exampleCell.sec and currentCell.candidates[val-1] == True:
-                        infoDict[currentCell] = [val]
-                if infoDict:
-                    information.append(OverlapInfo(secCandidateCells, infoDict))
+            exampleCell = candidateCells[0]
+            if candidateGroup.type == "col" or candidateGroup.type == "row":
+                infoGroups = [exampleCell.sec]
+            else:
+                infoGroups = [exampleCell.col, exampleCell.row]
+            for infoGroup in infoGroups:
+                overlapFound = True
+                for cell in candidateCells[1:]:
+                    if cell.getSameGroupType(infoGroup) != infoGroup:
+                        overlapFound = False
+                        break
+                if overlapFound:
+                    infoDict = {}
+                    for cell in infoGroup.members:
+                        if cell not in candidateCells and cell.candidates[val-1] == True:
+                            infoDict[cell] = [val]
+                    if infoDict:
+                        information.append(OverlapInfo([candidateGroup] + candidateCells, infoDict))
     if information and solveFlag:
         information[0].processInfo()
     return information
@@ -122,18 +98,10 @@ def checkHiddenPair(puzzle: Puzzle, solveFlag: bool) -> list[HiddenPairInfo]:
             # If value is only a candidate in two cells of a group
             if len(candidateCells) == 2:
                 # If a candidate has already been found for
-                match group.type:
-                    case "col":
-                        group1 = candidateCells[0].col.groupNum
-                        group2 = candidateCells[1].col.groupNum
-                    case "row":
-                        group1 = candidateCells[0].row.groupNum
-                        group2 = candidateCells[1].row.groupNum
-                    case "sec":
-                        group1 = candidateCells[0].sec.groupNum
-                        group2 = candidateCells[1].sec.groupNum
+                group1 = candidateCells[0].getSameGroupType(group).groupNum
+                group2 = candidateCells[1].getSameGroupType(group).groupNum
                 prevValue = pairs[group1].get(group2)
-                if prevValue != None:
+                if prevValue is not None:
                     infoDict = {}
                     nakedPair = [False] * 9
                     nakedPair[val-1] = True

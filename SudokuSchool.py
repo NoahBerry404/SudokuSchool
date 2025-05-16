@@ -27,10 +27,10 @@ def processPuzzle(unsolvedPuzzle: Puzzle):
             outputString += puzzle.printPuzzleCandidates(False)
             outputString += "\n"
     if puzzle.isSolved:
-        outputString += "Puzzle is Solved, Valid Solution = " + str(puzzle.validateSolution(testPuzzle2)) + "."
+        outputString += "Puzzle is Solved, Valid Solution = " + str(puzzle.validateSolution(unsolvedPuzzle)) + "."
     else:
         outputString += "Puzzle is not solved."
     with open("SudokuSchoolOutput.txt", 'w') as file:
         file.write(outputString)
 
-processPuzzle(testPuzzle2)
+processPuzzle(testPuzzle)
