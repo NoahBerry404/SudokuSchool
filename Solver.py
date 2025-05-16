@@ -56,7 +56,7 @@ def checkSoleOccurrence(puzzle: Puzzle, solveFlag: bool) -> list[SoleOccurrenceI
 # Checks the provided puzzle for situations where all of a group's cells that have
 # a certain value as a candidate share another group in common
 # Will update puzzle with new found information if solveFlag is True
-def checkOverlap(puzzle: Puzzle, solveFlag: bool) -> list[OverlapInfo]:
+def checkPointingPair(puzzle: Puzzle, solveFlag: bool) -> list[PointingPairInfo]:
     information = []
     for val in range(1, 10):
         for candidateGroup in puzzle.cols + puzzle.rows + puzzle.secs:
@@ -70,18 +70,18 @@ def checkOverlap(puzzle: Puzzle, solveFlag: bool) -> list[OverlapInfo]:
             else:
                 infoGroups = [exampleCell.col, exampleCell.row]
             for infoGroup in infoGroups:
-                overlapFound = True
+                pointingPairFound = True
                 for cell in candidateCells[1:]:
                     if cell.getSameGroupType(infoGroup) != infoGroup:
-                        overlapFound = False
+                        pointingPairFound = False
                         break
-                if overlapFound:
+                if pointingPairFound:
                     infoDict = {}
                     for cell in infoGroup.members:
                         if cell not in candidateCells and cell.candidates[val-1] == True:
                             infoDict[cell] = [val]
                     if infoDict:
-                        information.append(OverlapInfo([candidateGroup] + candidateCells, infoDict))
+                        information.append(PointingPairInfo([candidateGroup] + candidateCells, infoDict))
     if information and solveFlag:
         information[0].processInfo()
     return information
@@ -92,6 +92,7 @@ def checkOverlap(puzzle: Puzzle, solveFlag: bool) -> list[OverlapInfo]:
 def checkHiddenPair(puzzle: Puzzle, solveFlag: bool) -> list[HiddenPairInfo]:
     information = []
     for group in puzzle.cols + puzzle.rows + puzzle.secs:
+        valsRemaining = 9 - group.numSolved
         pairs = [{}] * 9
         for val in range(1, 10):
             candidateCells = group.getCandidateCells(val)
@@ -116,7 +117,7 @@ def checkHiddenPair(puzzle: Puzzle, solveFlag: bool) -> list[HiddenPairInfo]:
                             infoDict[cell] = invalidCandidates
                     # If new information found
                     if infoDict:
-                        information.append(HiddenPairInfo(group.members, infoDict))
+                        information.append(HiddenPairInfo(group, infoDict))
                 else:
                     pairs[group1][group2] = val
                     pairs[group2][group1] = val

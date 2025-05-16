@@ -191,7 +191,7 @@ class Puzzle:
     def setCellValue(self, val: int, col: int, row: int):
         targetCell = self.getCell(col, row)
         targetCell.setCell(val)
-    # Makes a copy of a puzzles original values
+    # Makes a copy of a puzzles original values and candidates
     def copyPuzzle(target: 'Puzzle') -> 'Puzzle':
         newPuzzle = Puzzle()
         for i in range(9):
@@ -202,6 +202,7 @@ class Puzzle:
                 newCell = newRow.members[j]
                 if cell.value != 0:
                     newCell.setCell(cell.value)
+                newCell.candidates = cell.candidates.copy()
         return newPuzzle
     # Checks that a puzzle is a solution of original
     def validateSolution(self, original: 'Puzzle'):
@@ -330,13 +331,13 @@ class SoleOccurrenceInfo(Info):
         infoString += "This means that " + str(val) + " is the cell's solution.\n"
         return infoString
 
-class OverlapInfo(Info):
+class PointingPairInfo(Info):
     def processInfo(self):
         for cell in self.results:
             cell.removeCandidate(self.results[cell][0])
     def printInfo(self) -> str:
         infoString = ""
-        infoString += "OVERLAP: The cells at "
+        infoString += "POINTING PAIR: The cells at "
         numSrcCells = len(self.sources) - 1
         for i in range(numSrcCells):
             if i != 0:

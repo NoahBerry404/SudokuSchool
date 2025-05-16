@@ -15,8 +15,8 @@ def processPuzzle(unsolvedPuzzle: Puzzle):
         newInfo += soloInfo
         soleOccInfo = checkSoleOccurrence(puzzle, False)
         newInfo += soleOccInfo
-        overlapInfo = checkOverlap(puzzle, False)
-        newInfo += overlapInfo
+        pointingPairInfo = checkPointingPair(puzzle, False)
+        newInfo += pointingPairInfo
         hidPairInfo = checkHiddenPair(puzzle, False)
         newInfo += hidPairInfo
         if newInfo:
