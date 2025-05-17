@@ -93,6 +93,7 @@ def checkHiddenPair(puzzle: Puzzle, solveFlag: bool) -> list[HiddenPairInfo]:
     information = []
     for group in puzzle.cols + puzzle.rows + puzzle.secs:
         valsRemaining = 9 - group.numSolved
+        maxHiddenSize = valsRemaining // 2
         pairs = [{}] * 9
         for val in range(1, 10):
             candidateCells = group.getCandidateCells(val)
