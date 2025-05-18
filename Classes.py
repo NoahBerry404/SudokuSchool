@@ -386,4 +386,12 @@ class HiddenPairInfo(Info):
             for candidate in self.results[cell]:
                 cell.removeCandidate(candidate)
     def printInfo(self) -> str:
-        return "Hidden Pair printInfo is currently unimplemented.\n"
+        infoString = "WIP HIDDEN PAIR:\n"
+        for cell in self.results:
+            infoString += "Cell at " + cell.printLocation() + " will remove candidates: "
+            for candidate in self.results[cell]:
+                infoString += str(candidate)
+            infoString += "\n"
+        infoString += "This is because of " + self.sources[0].type + " " + str(self.sources[0].groupNum) + " having "
+        infoString += str(self.sources[1][0]) + " and " + str(self.sources[1][1]) + " as values\n"
+        return infoString

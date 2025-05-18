@@ -92,17 +92,17 @@ def checkPointingPair(puzzle: Puzzle, solveFlag: bool) -> list[PointingPairInfo]
 def checkHiddenPair(puzzle: Puzzle, solveFlag: bool) -> list[HiddenPairInfo]:
     information = []
     for group in puzzle.cols + puzzle.rows + puzzle.secs:
-        valsRemaining = 9 - group.numSolved
-        maxHiddenSize = valsRemaining // 2
-        pairs = [{}] * 9
+        # valsRemaining = 9 - group.numSolved
+        # maxHiddenSize = valsRemaining // 2
+        pairs = [{} for _ in range(9)]
         for val in range(1, 10):
             candidateCells = group.getCandidateCells(val)
             # If value is only a candidate in two cells of a group
             if len(candidateCells) == 2:
                 # If a candidate has already been found for
-                group1 = candidateCells[0].getSameGroupType(group).groupNum
-                group2 = candidateCells[1].getSameGroupType(group).groupNum
-                prevValue = pairs[group1].get(group2)
+                cell1Index = group.members.index(candidateCells[0])
+                cell2Index = group.members.index(candidateCells[1])
+                prevValue = pairs[cell1Index].get(cell2Index)
                 if prevValue is not None:
                     infoDict = {}
                     nakedPair = [False] * 9
@@ -118,10 +118,10 @@ def checkHiddenPair(puzzle: Puzzle, solveFlag: bool) -> list[HiddenPairInfo]:
                             infoDict[cell] = invalidCandidates
                     # If new information found
                     if infoDict:
-                        information.append(HiddenPairInfo(group, infoDict))
+                        information.append(HiddenPairInfo([group, [prevValue, val], candidateCells[0], candidateCells[1]], infoDict))
                 else:
-                    pairs[group1][group2] = val
-                    pairs[group2][group1] = val
+                    pairs[cell1Index][cell2Index] = val
+                    pairs[cell2Index][cell1Index] = val
     if information and solveFlag:
         information[0].processInfo()
     return information
