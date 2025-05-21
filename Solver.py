@@ -1,5 +1,6 @@
 from Classes import *
- 
+from itertools import combinations
+
 # Identifies basic sudoku candidate ineligibility (each group can only have one of each value)
 # Will update puzzle with new found information if solveFlag is True
 def checkBasic(puzzle: Puzzle, solveFlag: bool) -> list[BasicInfo]:
@@ -92,36 +93,16 @@ def checkPointingPair(puzzle: Puzzle, solveFlag: bool) -> list[PointingPairInfo]
 def checkHiddenPair(puzzle: Puzzle, solveFlag: bool) -> list[HiddenPairInfo]:
     information = []
     for group in puzzle.cols + puzzle.rows + puzzle.secs:
-        # valsRemaining = 9 - group.numSolved
-        # maxHiddenSize = valsRemaining // 2
-        pairs = [{} for _ in range(9)]
-        for val in range(1, 10):
-            candidateCells = group.getCandidateCells(val)
-            # If value is only a candidate in two cells of a group
-            if len(candidateCells) == 2:
-                # If a candidate has already been found for
-                cell1Index = group.members.index(candidateCells[0])
-                cell2Index = group.members.index(candidateCells[1])
-                prevValue = pairs[cell1Index].get(cell2Index)
-                if prevValue is not None:
-                    infoDict = {}
-                    nakedPair = [False] * 9
-                    nakedPair[val-1] = True
-                    nakedPair[prevValue-1] = True
-                    for cell in candidateCells:
-                        invalidCandidates = []
-                        for i in range(9):
-                            if cell.candidates[i] != nakedPair[i]:
-                                invalidCandidates.append(i+1)
-                        # If invalid candidates found
-                        if invalidCandidates:
-                            infoDict[cell] = invalidCandidates
-                    # If new information found
-                    if infoDict:
-                        information.append(HiddenPairInfo([group, [prevValue, val], candidateCells[0], candidateCells[1]], infoDict))
-                else:
-                    pairs[cell1Index][cell2Index] = val
-                    pairs[cell2Index][cell1Index] = val
+        # Hidden groups without two excluded candidates are redundant, can be solved by sole candidate.
+        maxHiddenSize = 9 - group.numSolved - 2
+        groupCandidateList = []
+        for cell in group:
+            # Don't include solved cells or solo candidate cells
+            if cell.value == 0 and cell.numCandidates > 1:
+                groupCandidateList.append(cell.candidates)
+        combos = []
+        for tupleLength in range(2, maxHiddenSize + 1):
+            combos.append()
     if information and solveFlag:
         information[0].processInfo()
     return information
