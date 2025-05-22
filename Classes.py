@@ -386,12 +386,24 @@ class HiddenPairInfo(Info):
             for candidate in self.results[cell]:
                 cell.removeCandidate(candidate)
     def printInfo(self) -> str:
-        infoString = "WIP HIDDEN PAIR:\n"
-        for cell in self.results:
-            infoString += "Cell at " + cell.printLocation() + " will remove candidates: "
-            for candidate in self.results[cell]:
-                infoString += str(candidate)
-            infoString += "\n"
+        sourceGroup: Group = self.sources[0]
+        sourceCells: list[Cell] = self.sources[1:]
+        comboSize = len(sourceCells)
+        infoString = "HIDDEN PAIR: " + sourceGroup.printGroup() + " " + str(sourceGroup.groupNum)
+        infoString += " contains " + str(comboSize) + " cells exclusively sharing the same " + str(comboSize)
+        infoString += " candidates.\n This group consists of the cells at "
+        i = 0
+        for cell in sourceCells:
+            if i != 0:
+                if numResults > 2:
+                    infoString += ","
+                if i == numResults-1:
+                    infoString += " and "
+                else:
+                    infoString += " "
+            infoString += key.printLocation()
+            i += 1
+        infoString += " (column, row), so all other cells in the group cannot have their candidates."
         infoString += "This is because of " + self.sources[0].type + " " + str(self.sources[0].groupNum) + " having "
         infoString += str(self.sources[1][0]) + " and " + str(self.sources[1][1]) + " as values\n"
         return infoString

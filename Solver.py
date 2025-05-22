@@ -93,16 +93,37 @@ def checkPointingPair(puzzle: Puzzle, solveFlag: bool) -> list[PointingPairInfo]
 def checkHiddenPair(puzzle: Puzzle, solveFlag: bool) -> list[HiddenPairInfo]:
     information = []
     for group in puzzle.cols + puzzle.rows + puzzle.secs:
-        # Hidden groups without two excluded candidates are redundant, can be solved by sole candidate.
+        # Hidden pairs without two excluded candidates are redundant, can be solved by sole candidate.
         maxHiddenSize = 9 - group.numSolved - 2
-        groupCandidateList = []
+        validCells = []
         for cell in group:
             # Don't include solved cells or solo candidate cells
             if cell.value == 0 and cell.numCandidates > 1:
-                groupCandidateList.append(cell.candidates)
-        combos = []
+                validCells.append(cell)
+        potentialInfo = []
         for tupleLength in range(2, maxHiddenSize + 1):
-            combos.append()
+            for combo in combinations(validCells, tupleLength):
+                comboCandidates = [False] * 9
+                cells = []
+                for currentCell in combo:
+                    cells.append(currentCell)
+                    for i in range(9):
+                        comboCandidates[i] = comboCandidates[i] or currentCell.candidates[i]
+                if comboCandidates.count(True) == len(cells):
+                    potentialInfo.append([cells, comboCandidates])
+        for combo in potentialInfo:
+            infoDict = {}
+            for cell in group.members:
+                if cell in combo[0]:
+                    continue
+                invalidValues = []
+                for i in range(9):
+                    if cell.candidates[i] == True and combo[1][i] == True:
+                        invalidValues.append(i+1)
+                if invalidValues:
+                    infoDict[cell] = invalidValues
+            if infoDict:
+                information.append(HiddenPairInfo([group] + combo, infoDict))
     if information and solveFlag:
         information[0].processInfo()
     return information
