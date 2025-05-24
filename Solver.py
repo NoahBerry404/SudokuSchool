@@ -96,7 +96,7 @@ def checkHiddenPair(puzzle: Puzzle, solveFlag: bool) -> list[HiddenPairInfo]:
         # Hidden pairs without two excluded candidates are redundant, can be solved by sole candidate.
         maxHiddenSize = 9 - group.numSolved - 2
         validCells = []
-        for cell in group:
+        for cell in group.members:
             # Don't include solved cells or solo candidate cells
             if cell.value == 0 and cell.numCandidates > 1:
                 validCells.append(cell)
@@ -123,7 +123,7 @@ def checkHiddenPair(puzzle: Puzzle, solveFlag: bool) -> list[HiddenPairInfo]:
                 if invalidValues:
                     infoDict[cell] = invalidValues
             if infoDict:
-                information.append(HiddenPairInfo([group] + combo, infoDict))
+                information.append(HiddenPairInfo([group] + combo[0], infoDict))
     if information and solveFlag:
         information[0].processInfo()
     return information
