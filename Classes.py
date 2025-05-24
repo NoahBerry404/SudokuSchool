@@ -100,7 +100,7 @@ class Cell:
         return candidateString
     # Returns a string with the location of the cell in the puzzle in "(col, row)" format
     def printLocation(self) -> str:
-        return "(" + str(self.col.groupNum+1) + ", " + str(self.row.groupNum+1) + ")"
+        return "(" + str(self.col.groupNum) + ", " + str(self.row.groupNum) + ")"
 
 class Group:
     # Initiate a new group, the super class for Column, Row, and Section
@@ -114,7 +114,7 @@ class Group:
         self.values = [False] * 9
         # The number of cells in the group that are solved
         self.numSolved = 0
-        # The index of the group in puzzle
+        # The order of the group in puzzle
         self.groupNum = groupNum
         if type not in ["col", "row", "sec"]:
             raise Exception("Invalid Group Type")
@@ -154,7 +154,7 @@ class Section(Group):
         secString = ""
         for cell in self.members:
             secString += cell.printCell()
-            if cell.col.groupNum > 0 and cell.col.groupNum % 3 == 0:
+            if cell.col.groupNum > 1 and cell.col.groupNum % 3 == 1:
                 secString += "\n"
         return secString
     def printType(self) -> str:
@@ -170,9 +170,9 @@ class Puzzle:
         self.solvedGroups = 0
         self.isSolved = False
         for i in range(9):
-            self.rows.append(Row(self, i, "row"))
-            self.cols.append(Column(self, i, "col"))
-            self.secs.append(Section(self, i, "sec"))
+            self.rows.append(Row(self, i+1, "row"))
+            self.cols.append(Column(self, i+1, "col"))
+            self.secs.append(Section(self, i+1, "sec"))
         for i in range(81):
             currentColIndex = i % 9
             currentCol = self.cols[currentColIndex]
@@ -184,9 +184,9 @@ class Puzzle:
             currentCol.members.append(newCell)
             currentRow.members.append(newCell)
             currentSec.members.append(newCell)
-    # Retrieve a cell by its column and row indices
+    # Retrieve a cell by its column and row
     def getCell(self, col: int, row: int) -> Cell:
-        return self.rows[row].members[col]
+        return self.rows[row-1].members[col-1]
     # Get a puzzle's cell by column and row and set it to the given value
     def setCellValue(self, val: int, col: int, row: int):
         targetCell = self.getCell(col, row)
@@ -230,15 +230,15 @@ class Puzzle:
     def printPuzzle(self) -> str:
         puzzleString = ""
         for i in range(81):
-            currentCol = i % 9
-            currentRow = i // 9
+            currentCol = i % 9 + 1
+            currentRow = i // 9 + 1
             currentCell = self.getCell(currentCol, currentRow)
             puzzleString += currentCell.printCell()
-            if currentCol == 8:
+            if currentCol == 9:
                 puzzleString += "\n"
-            if currentCol % 3 == 2 and currentCol != 8:
+            if currentCol % 3 == 0 and currentCol != 9:
                 puzzleString += "| "
-            elif currentRow % 3 == 2 and currentCol == 8 and currentRow != 8:
+            elif currentRow % 3 == 0 and currentCol == 9 and currentRow != 9:
                 puzzleString += "----------------------\n"
         puzzleString += "\n\n"
         return puzzleString
@@ -247,7 +247,7 @@ class Puzzle:
         candidateString = ""
         for i in range(27):
             for j in range(9):
-                currentCell = self.getCell(j, i // 3)
+                currentCell = self.getCell(j + 1, i // 3 + 1)
                 candidateString += currentCell.printCandidateLine(i%3, printSolved)
                 if j % 3 == 2 and j != 8:
                     candidateString += "| "
@@ -322,11 +322,11 @@ class SoleOccurrenceInfo(Info):
         val = self.results[cell][0]
         infoString += "SOLE OCCURRENCE: The cell at " + cell.printLocation() + " (column, row) is the only cell in "
         if(all(currentCell.col == self.sources[0].col for currentCell in self.sources[1:])):
-            infoString += "column " + str(self.sources[0].col.groupNum + 1)
+            infoString += "column " + str(self.sources[0].col.groupNum)
         elif(all(currentCell.row == self.sources[0].row for currentCell in self.sources[1:])):
-            infoString += "row " + str(self.sources[0].row.groupNum + 1)
+            infoString += "row " + str(self.sources[0].row.groupNum)
         else:
-            infoString += "section " + str(self.sources[0].sec.groupNum + 1)
+            infoString += "section " + str(self.sources[0].sec.groupNum)
         infoString += " with " + str(val) + " as an eligible candidate.\n"
         infoString += "This means that " + str(val) + " is the cell's solution.\n"
         return infoString
@@ -352,7 +352,7 @@ class PointingPairInfo(Info):
         srcGroup = self.sources[0]
         infoString += srcGroup.printType()
         candidate = self.results[list(self.results.keys())[0]][0]
-        infoString += " " + str(srcGroup.groupNum + 1) + " with " + str(candidate) + " as a candidate.\n"
+        infoString += " " + str(srcGroup.groupNum) + " with " + str(candidate) + " as a candidate.\n"
         infoString += "Since these cells are in the same "
         if srcGroup.type == "sec":
             if self.sources[1].col == self.sources[2].col:
@@ -386,4 +386,47 @@ class HiddenPairInfo(Info):
             for candidate in self.results[cell]:
                 cell.removeCandidate(candidate)
     def printInfo(self) -> str:
-        return "Hidden Pair printInfo is currently unimplemented.\n"
+        sourceGroup = self.sources[0]
+        sourceCells = self.sources[1:]
+        comboSize = len(sourceCells)
+        infoString = "HIDDEN PAIR: " + sourceGroup.printType() + " " + str(sourceGroup.groupNum)
+        infoString += " contains " + str(comboSize) + " cells exclusively sharing the same " + str(comboSize)
+        infoString += " candidates.\nThis group consists of the cells at "
+        i = 0
+        for cell in sourceCells:
+            if i != 0:
+                if comboSize > 2:
+                    infoString += ","
+                if i == comboSize-1:
+                    infoString += " and "
+                else:
+                    infoString += " "
+            infoString += cell.printLocation()
+            i += 1
+        infoString += " (column, row).\nThis means that "
+        i = 0
+        numResults = len(self.results)
+        for infoCell in self.results:
+            if i != 0:
+                infoString += ","
+                if i == numResults-1:
+                    infoString += " and "
+                else:
+                    infoString += " "
+            infoString += "the cell at " + infoCell.printLocation() + " cannot have "
+            candidates = self.results[infoCell]
+            numCandidates = len(candidates)
+            for j in range(numCandidates):
+                currentCandidate = candidates[j]
+                if j != 0:
+                    if numCandidates > 2:
+                        infoString += ","
+                    if j == numCandidates-1:
+                        infoString += " and "
+                    else:
+                        infoString += " "
+                infoString += str(currentCandidate)
+            infoString += " as a candidate"
+            i += 1
+        infoString += ".\n"
+        return infoString
