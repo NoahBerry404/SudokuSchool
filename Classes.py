@@ -126,6 +126,13 @@ class Group:
             if cell.candidates[val-1] == True:
                 cellList.append(cell)
         return cellList
+    # # Returns a list of the number of occurrences of each candidates in a group's members
+    # def countCandidates(self) -> list[int]:
+    #     occurrences = [0] * 9
+    #     for cell in self.members:
+    #         for i in range(9):
+    #             occurrences[i] += int(cell.candidates[i])
+    #     return occurrences
     # Print the values of the cells in the group (Implemented by subclass)
     def printGroup(self):
         raise NotImplementedError("Subclasses must implement this method")
@@ -430,3 +437,10 @@ class HiddenPairInfo(Info):
             i += 1
         infoString += ".\n"
         return infoString
+
+class FishInfo(Info):
+    def processInfo(self):
+        for cell in self.results:
+            cell.removeCandidate(self.results[cell][0])
+    def printInfo(self) -> str:
+        return "FISH INFO: WIP"
