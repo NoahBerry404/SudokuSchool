@@ -1,6 +1,26 @@
 from Classes import *
 from itertools import combinations
 
+# Recursive Function to Brute Force Solve a Sudoku
+def forceSolve(originalPuzzle: Puzzle, puzzle: Puzzle) -> Puzzle:
+    for row in puzzle.rows:
+        for cell in row.members:
+            if cell.val == 0:
+                for candidate in cell.getCandidates():
+                    try:
+                        newPuzzle = puzzle.copyPuzzle()
+                        newCell = newPuzzle.getCell(cell.col.groupNum, cell.row.groupNum)
+                        newCell.setValue(candidate)
+                        result = forceSolve(originalPuzzle, newPuzzle)
+                        if result != None:
+                            return result
+                    except:
+                        try:
+                            cell.removeCandidate(candidate, False)
+                        except:
+                            return None
+    return puzzle
+    
 # Identifies basic sudoku candidate ineligibility (each group can only have one of each value)
 # Will update puzzle with new found information if solveFlag is True
 def checkBasic(puzzle: Puzzle, solveFlag: bool) -> list[BasicInfo]:

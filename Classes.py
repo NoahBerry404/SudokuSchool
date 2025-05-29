@@ -14,7 +14,7 @@ class Cell:
         # Section that the cell belongs to
         self.sec = section
     # Set a cell to be solved at the given value
-    def setCell(self, value: int):
+    def setValue(self, value: int):
         if self.value != 0:
             raise Exception("Tried to set value of a solved cell")
         if self.candidates[value-1] == False:
@@ -43,7 +43,7 @@ class Cell:
             if candidate == True:
                 count += 1
         if count == 0:
-            raise Exception("No Candidates Passed, use setCell if solving cell")
+            raise Exception("No Candidates Passed, use setValue if solving cell")
         self.numCandidates = count
         self.candidates = candidates
     # Remove a candidate from a cell
@@ -55,6 +55,13 @@ class Cell:
             self.numCandidates -= 1
         elif strict:
             raise Exception("Tried to remove nonexistent candidate.")
+    # Returns a Cell's candidates as a list of their values
+    def getCandidates(self) -> list[int]:
+        candList = []
+        for i in range(len(self.candidates)):
+            if self.candidates[i] == True:
+                candList.append(i+1)
+        return candList
     # Returns a cell's parent group of the same type as targetGroup
     def getSameGroupType(self, targetGroup: 'Group') -> 'Group':
         match targetGroup.type:
@@ -197,18 +204,18 @@ class Puzzle:
     # Get a puzzle's cell by column and row and set it to the given value
     def setCellValue(self, val: int, col: int, row: int):
         targetCell = self.getCell(col, row)
-        targetCell.setCell(val)
+        targetCell.setValue(val)
     # Makes a copy of a puzzles original values and candidates
-    def copyPuzzle(target: 'Puzzle') -> 'Puzzle':
+    def copyPuzzle(self) -> 'Puzzle':
         newPuzzle = Puzzle()
         for i in range(9):
-            row = target.rows[i]
+            row = self.rows[i]
             newRow = newPuzzle.rows[i]
             for j in range(9):
                 cell = row.members[j]
                 newCell = newRow.members[j]
                 if cell.value != 0:
-                    newCell.setCell(cell.value)
+                    newCell.setValue(cell.value)
                 newCell.candidates = cell.candidates.copy()
         return newPuzzle
     # Checks that a puzzle is a solution of original
@@ -308,7 +315,7 @@ class SoloCandidateInfo(Info):
         # There will always be only one entry in this dictionary
         cell = list(self.results.keys())[0]
         value = self.results[cell][0]
-        cell.setCell(value)
+        cell.setValue(value)
     def printInfo(self) -> str:
         infoString = ""
         cell = list(self.results.keys())[0]
@@ -322,7 +329,7 @@ class SoleOccurrenceInfo(Info):
         # There will always be only one entry in this dictionary
         cell = list(self.results.keys())[0]
         value = self.results[cell][0]
-        cell.setCell(value)
+        cell.setValue(value)
     def printInfo(self) -> str:
         infoString = ""
         cell = list(self.results.keys())[0]
