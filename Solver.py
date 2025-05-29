@@ -14,6 +14,11 @@ def forceSolve(originalPuzzle: Puzzle, puzzle: Puzzle) -> Puzzle:
                         result = forceSolve(originalPuzzle, newPuzzle)
                         if result != None:
                             return result
+                        else:
+                            try:
+                                cell.removeCandidate(candidate, False)
+                            except:
+                                return None
                     except:
                         try:
                             cell.removeCandidate(candidate, False)
