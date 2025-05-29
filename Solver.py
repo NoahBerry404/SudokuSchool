@@ -131,19 +131,18 @@ def checkHiddenPair(puzzle: Puzzle, solveFlag: bool) -> list[HiddenPairInfo]:
 # Checks for when n rows or n columns contain exactly n candidate cells and all candidate cells share
 # n rows and columns. The name of the strategy is X Wing if n=2, Sword Fish if n=3, Jellyfish if n=4, etc.
 # Will update puzzle with new found information if solveFlag is True
-def checkFishes(puzzle: Puzzle, solveFlag: bool) -> list[XWingInfo]:
+def checkFishes(puzzle: Puzzle, solveFlag: bool) -> list[FishInfo]:
     information = []
     maxSize = 9 - 2
     fishDict = {}
     for size in range(2, maxSize + 1):
-        colCandByValue = [[] * 9]
-        rowCandByValue = [[] * 9]
-        fishDict[size] = (colCandByValue, rowCandByValue)
+        # First blankCandByValue is for Columns, Second is for Rows
+        fishDict[size] = [[list() for _ in range(9)], [list() for _ in range(9)]]
     for group in puzzle.cols + puzzle.rows:
         for i in range(9):
             candidateCells = group.getCandidateCells(i+1)
             numCells = len(candidateCells)
-            if numCells > 1:
+            if numCells > 1 and numCells <= maxSize:
                 fishDict[numCells][int(group.type == "row")][i].append(candidateCells)
     for key in range(2, maxSize + 1):
         colCandByValue = fishDict[key][0]
@@ -159,15 +158,20 @@ def checkFishes(puzzle: Puzzle, solveFlag: bool) -> list[XWingInfo]:
                 for j in range(numCandCells):
                     if numCandCells - j < key:
                         break
-                    matches = []
-                    matchCells = []
                     refCells = candCells[j]
+                    matches = [refCells]
+                    matchCells = refCells.copy()
                     for comparedCells in candCells[j+1:]:
                         isMatch = True
                         for k in range(key):
-                            if refCells[k].row != comparedCells[k].row:
-                                isMatch = False
-                                break
+                            if groupType == "col":
+                                if refCells[k].row != comparedCells[k].row:
+                                    isMatch = False
+                                    break
+                            else:
+                                if refCells[k].col != comparedCells[k].col:
+                                    isMatch = False
+                                    break
                         if isMatch:
                             matches.append(comparedCells)
                             matchCells += comparedCells
@@ -186,7 +190,7 @@ def checkFishes(puzzle: Puzzle, solveFlag: bool) -> list[XWingInfo]:
                                 if member.candidates[i] == True and member not in matchCells:
                                     infoDict[member] = [i+1]
                         if infoDict:
-                            information.append(FishInfo(matches, infoDict))
+                            information.append(FishInfo([refCells] + matches, infoDict))
     if information and solveFlag:
         information[0].processInfo()
     return information

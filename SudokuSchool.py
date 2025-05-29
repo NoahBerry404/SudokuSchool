@@ -1,5 +1,5 @@
 from Solver import *
-from TestPuzzles import testPuzzle1, testPuzzle2, testPuzzle3, testPuzzle4
+from TestPuzzles import testPuzzle1, testPuzzle2, testPuzzle3, testPuzzle4, testPuzzle5, testPuzzle6
 
 def processPuzzle(unsolvedPuzzle: Puzzle):
     puzzle = unsolvedPuzzle.copyPuzzle()
@@ -19,6 +19,8 @@ def processPuzzle(unsolvedPuzzle: Puzzle):
         newInfo += pointingPairInfo
         hidPairInfo = checkHiddenPair(puzzle, False)
         newInfo += hidPairInfo
+        fishInfo = checkFishes(puzzle, False)
+        newInfo += fishInfo
         if newInfo != []:
             outputString += newInfo[0].printInfo()
             newInfo[0].processInfo()

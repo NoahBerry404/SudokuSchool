@@ -443,4 +443,4 @@ class FishInfo(Info):
         for cell in self.results:
             cell.removeCandidate(self.results[cell][0])
     def printInfo(self) -> str:
-        return "FISH INFO: WIP"
+        return "FISH INFO: WIP\n"
