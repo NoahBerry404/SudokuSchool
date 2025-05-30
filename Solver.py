@@ -153,8 +153,8 @@ def checkHiddenPair(puzzle: Puzzle, solveFlag: bool) -> list[HiddenPairInfo]:
         information[0].processInfo()
     return information
 
-# Checks for when n rows or n columns contain exactly n candidate cells and all candidate cells share
-# n rows and columns. The name of the strategy is X Wing if n=2, Sword Fish if n=3, Jellyfish if n=4, etc.
+# Checks for when n rows or n columns exclusively have 2 to n cells each with x as a candidate where the cells
+# are all in the same n columns and rows. The name of the strategy is X Wing if n=2, Sword Fish if n=3, etc.
 # Will update puzzle with new found information if solveFlag is True
 def checkFishes(puzzle: Puzzle, solveFlag: bool) -> list[FishInfo]:
     information = []
@@ -168,54 +168,34 @@ def checkFishes(puzzle: Puzzle, solveFlag: bool) -> list[FishInfo]:
             candidateCells = group.getCandidateCells(i+1)
             numCells = len(candidateCells)
             if numCells > 1 and numCells <= maxSize:
-                fishDict[numCells][int(group.type == "row")][i].append(candidateCells)
+                for j in range(numCells, maxSize+1):
+                    fishDict[j][0 if group.type == "col" else 1][i].append(candidateCells)
     for key in range(2, maxSize + 1):
-        colCandByValue = fishDict[key][0]
-        rowCandByValue = fishDict[key][1]
-        for candByValue in [colCandByValue, rowCandByValue]:
-            if candByValue == colCandByValue:
+        for candByValue in fishDict[key]:
+            if candByValue == fishDict[key][0]:
                 groupType = "col"
             else:
                 groupType = "row"
             for i in range(9):
                 candCells = candByValue[i]
                 numCandCells = len(candCells)
-                for j in range(numCandCells):
-                    if numCandCells - j < key:
-                        break
-                    refCells = candCells[j]
-                    matches = [refCells]
-                    matchCells = refCells.copy()
-                    for comparedCells in candCells[j+1:]:
-                        isMatch = True
-                        for k in range(key):
-                            if groupType == "col":
-                                if refCells[k].row != comparedCells[k].row:
-                                    isMatch = False
-                                    break
-                            else:
-                                if refCells[k].col != comparedCells[k].col:
-                                    isMatch = False
-                                    break
-                        if isMatch:
-                            matches.append(comparedCells)
-                            matchCells += comparedCells
-                            if len(matches) == key:
-                                break
-                    if len(matches) == key:
+                for combo in combinations(candCells, key):
+                    cols = set()
+                    rows = set()
+                    fishCells = []
+                    for groupCandidateCells in combo:
+                        for candidateCell in groupCandidateCells:
+                            cols.add(candidateCell.col.groupNum)
+                            rows.add(candidateCell.row.groupNum)
+                            fishCells.append(candidateCell)
+                    if cols == rows and len(cols) == key:
                         infoDict = {}
-                        infoGroups = []
-                        for cell in matches[0]:
-                            if groupType == "col":
-                                infoGroups.append(cell.row)
-                            else:
-                                infoGroups.append(cell.col)
-                        for group in infoGroups:
+                        for group in rows if groupType == "col" else cols:
                             for member in group.members:
-                                if member.candidates[i] == True and member not in matchCells:
+                                if member.candidates[i] == True and member not in fishCells:
                                     infoDict[member] = [i+1]
                         if infoDict:
-                            information.append(FishInfo([refCells] + matches, infoDict))
+                            information.append(FishInfo(combo, infoDict))
     if information and solveFlag:
         information[0].processInfo()
     return information
