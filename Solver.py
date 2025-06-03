@@ -185,8 +185,8 @@ def checkFishes(puzzle: Puzzle, solveFlag: bool) -> list[FishInfo]:
                     fishCells = []
                     for groupCandidateCells in combo:
                         for candidateCell in groupCandidateCells:
-                            cols.add(candidateCell.col.groupNum)
-                            rows.add(candidateCell.row.groupNum)
+                            cols.add(candidateCell.col)
+                            rows.add(candidateCell.row)
                             fishCells.append(candidateCell)
                     if cols == rows and len(cols) == key:
                         infoDict = {}
