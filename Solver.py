@@ -3,6 +3,8 @@ from itertools import combinations
 
 # Recursive Function to Brute Force Solve a Sudoku
 def forceSolve(originalPuzzle: Puzzle, puzzle: Puzzle) -> Puzzle:
+    if not puzzle.isSubpuzzle(originalPuzzle):
+        return None
     for row in puzzle.rows:
         for cell in row.members:
             if cell.val == 0:

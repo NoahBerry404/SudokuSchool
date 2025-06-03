@@ -133,13 +133,6 @@ class Group:
             if cell.candidates[val-1] == True:
                 cellList.append(cell)
         return cellList
-    # # Returns a list of the number of occurrences of each candidates in a group's members
-    # def countCandidates(self) -> list[int]:
-    #     occurrences = [0] * 9
-    #     for cell in self.members:
-    #         for i in range(9):
-    #             occurrences[i] += int(cell.candidates[i])
-    #     return occurrences
     # Print the values of the cells in the group (Implemented by subclass)
     def printGroup(self):
         raise NotImplementedError("Subclasses must implement this method")
@@ -218,6 +211,21 @@ class Puzzle:
                     newCell.setValue(cell.value)
                 newCell.candidates = cell.candidates.copy()
         return newPuzzle
+    # Checks if all values of self are valid values for original
+    def isSubpuzzle(self, original: 'Puzzle') -> bool:
+        for i in range(9):
+            subRow = self.rows[i]
+            superRow = original.rows[i]
+            for j in range(9):
+                subCell = subRow.members[j]
+                superCell = superRow.members[j]
+                if superCell.value != 0:
+                    if subCell.value != superCell.value:
+                        return False
+                elif subCell.value != 0:
+                    if superCell.candidates[subCell.value-1] != True:
+                        return False
+        return True
     # Checks that a puzzle is a solution of original
     def validateSolution(self, original: 'Puzzle'):
         if self.isSolved == False:

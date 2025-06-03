@@ -2,6 +2,8 @@ from Solver import *
 from TestPuzzles import testPuzzle1, testPuzzle2, testPuzzle3, testPuzzle4, testPuzzle5, testPuzzle6
 
 def processPuzzle(unsolvedPuzzle: Puzzle):
+    bruteSolve = forceSolve(unsolvedPuzzle, unsolvedPuzzle)
+    print(bruteSolve.printPuzzle())
     puzzle = unsolvedPuzzle.copyPuzzle()
     file = open("SudokuSchoolOutput.txt", 'w')
     file.write("Starting Values:\n" + puzzle.printPuzzle() + "\n")
