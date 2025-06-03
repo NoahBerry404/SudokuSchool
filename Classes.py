@@ -211,21 +211,6 @@ class Puzzle:
                     newCell.setValue(cell.value)
                 newCell.candidates = cell.candidates.copy()
         return newPuzzle
-    # Checks if all values of self are valid values for original
-    def isSubpuzzle(self, original: 'Puzzle') -> bool:
-        for i in range(9):
-            subRow = self.rows[i]
-            superRow = original.rows[i]
-            for j in range(9):
-                subCell = subRow.members[j]
-                superCell = superRow.members[j]
-                if superCell.value != 0:
-                    if subCell.value != superCell.value:
-                        return False
-                elif subCell.value != 0:
-                    if superCell.candidates[subCell.value-1] != True:
-                        return False
-        return True
     # Checks that a puzzle is a solution of original
     def validateSolution(self, original: 'Puzzle'):
         if self.isSolved == False:

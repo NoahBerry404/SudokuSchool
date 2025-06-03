@@ -2,8 +2,6 @@ from Solver import *
 from TestPuzzles import testPuzzle1, testPuzzle2, testPuzzle3, testPuzzle4, testPuzzle5, testPuzzle6
 
 def processPuzzle(unsolvedPuzzle: Puzzle):
-    bruteSolve = forceSolve(unsolvedPuzzle, unsolvedPuzzle)
-    print(bruteSolve.printPuzzle())
     puzzle = unsolvedPuzzle.copyPuzzle()
     file = open("SudokuSchoolOutput.txt", 'w')
     file.write("Starting Values:\n" + puzzle.printPuzzle() + "\n")
@@ -33,7 +31,19 @@ def processPuzzle(unsolvedPuzzle: Puzzle):
     if puzzle.isSolved:
         file.write("Puzzle is Solved, Valid Solution = " + str(puzzle.validateSolution(unsolvedPuzzle)) + ".")
     else:
-        file.write("Puzzle is not solved.")
+        file.write("Puzzle is not solved, solving remaining using brute force.\n")
+        unsolvedCellDict = {}
+        for i in range(9):
+            unsolvedCellDict[i+1] = []
+        for row in puzzle.rows:
+            for cell in row.members:
+                if cell.value == 0:
+                    unsolvedCellDict[cell.numCandidates] += [(cell.col.groupNum, cell.row.groupNum)]
+        forceSolvedPuzzle = forceSolve(puzzle, puzzle, unsolvedCellDict)
+        try:
+            file.write(forceSolvedPuzzle.printPuzzle())
+        except:
+            file.write("FORCE SOLVE FAILED")
     file.close()
 
-processPuzzle(testPuzzle1)
+processPuzzle(testPuzzle3)
