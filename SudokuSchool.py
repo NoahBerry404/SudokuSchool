@@ -48,4 +48,22 @@ def processPuzzle(unsolvedPuzzle: Puzzle):
             file.write("FORCE SOLVE FAILED.\n")
     file.close()
 
-processPuzzle(testPuzzle6)
+puzzleNum = input("Enter Test Puzzle Number: ")
+match puzzleNum:
+    case "1":
+        selectedPuzzle = testPuzzle1
+    case "2":
+        selectedPuzzle = testPuzzle2
+    case "3":
+        selectedPuzzle = testPuzzle3
+    case "4":
+        selectedPuzzle = testPuzzle4
+    case "5":
+        selectedPuzzle = testPuzzle5
+    case "6":
+        selectedPuzzle = testPuzzle6
+    case _:
+        selectedPuzzle = None
+        raise Exception("Invalid Test Puzzle Number")
+processPuzzle(selectedPuzzle)
+print("Check SudokuSchoolOutput.txt for Results")
