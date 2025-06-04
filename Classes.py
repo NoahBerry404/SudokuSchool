@@ -463,17 +463,18 @@ class FishInfo(Info):
         infoDict = self.results
         infoCells = list(infoDict.keys())
         infoValue = infoDict[infoCells[0]][0]
+        comboLength = len(combo)
         if infoCells[0].col in cols:
             infoGroups: list[Column]
-            infoGroups = cols
+            infoGroups = sorted(list(cols), key=lambda x: x.groupNum)
             strictGroups: list[Row]
-            strictGroups = rows
+            strictGroups = sorted(list(rows), key=lambda x: x.groupNum)
         else:
             infoGroups: list[Row]
-            infoGroups = rows
+            infoGroups = sorted(list(rows), key=lambda x: x.groupNum)
             strictGroups: list[Column]
-            strictGroups = cols
-        match len(combo):
+            strictGroups = sorted(list(cols), key=lambda x: x.groupNum)
+        match comboLength:
             case 2:
                 infoString = "X-WING"
             case 3:
@@ -488,9 +489,34 @@ class FishInfo(Info):
                 infoString = "LEVIATHAN"
             case _:
                 infoString = "FISH"
-        infoString += ": There are " + str(len(combo)) + " " + strictGroups[0].printType() + "s"
-        infoString += " where all cells that have " + str(infoValue) + " as a candidate, share the same "
-        infoString += str(len(combo)) + " " + infoGroups[0].printType() + "s\nThis means that the cell"
+        infoString += ": The candidate cells for the value " + str(infoValue) + " in the " + str(comboLength) 
+        infoString += " " + strictGroups[0].printType() + "s: "
+        i = 0
+        for group in strictGroups:
+            if i != 0:
+                if len(strictGroups) > 2:
+                    infoString += ","
+                if i == len(strictGroups)-1:
+                    infoString += " and "
+                else:
+                    infoString += " "
+            infoString += str(group.groupNum)
+            i += 1
+        infoString += ", also share the same " + str(comboLength) + " " + infoGroups[0].printType() + "s: "
+        i = 0
+        for group in infoGroups:
+            if i != 0:
+                if len(infoGroups) > 2:
+                    infoString += ","
+                if i == len(infoGroups)-1:
+                    infoString += " and "
+                else:
+                    infoString += " "
+            infoString += str(group.groupNum)
+            i += 1
+        infoString += ".\n"
+        infoString += "Since all of these candidate cells share the same " + str(comboLength) + " columns and rows, no other cells in these "
+        infoString += "columns and rows can have a value of " + str(infoValue) + ".\nThis means that the cell"
         if len(infoCells) > 1:
             infoString += "s"
         infoString += " at "
@@ -505,4 +531,5 @@ class FishInfo(Info):
                     infoString += " "
             infoString += cell.printLocation()
             i += 1
-        infoString += " (column, row) cannot have " + str(infoValue) + " as a candidate."
+        infoString += " (column, row) cannot have " + str(infoValue) + " as a candidate.\n"
+        return infoString

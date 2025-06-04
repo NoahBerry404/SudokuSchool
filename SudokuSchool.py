@@ -4,7 +4,8 @@ from TestPuzzles import testPuzzle1, testPuzzle2, testPuzzle3, testPuzzle4, test
 def processPuzzle(unsolvedPuzzle: Puzzle):
     puzzle = unsolvedPuzzle.copyPuzzle()
     file = open("SudokuSchoolOutput.txt", 'w')
-    file.write("Starting Values:\n" + puzzle.printPuzzle() + "\n")
+    file.write("Starting Values:\n" + puzzle.printPuzzle())
+    file.write("Starting Candidates:\n" + puzzle.printPuzzleCandidates())
     newInfo = [""]
     while newInfo != []:
         outputString = ""
