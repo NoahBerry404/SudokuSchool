@@ -42,14 +42,13 @@ class Cell:
             raise Exception("At least 1 candidate must be provided")
         if len(valueList) != len(set(valueList)):
             raise Exception("All candidates must be unique")
-        targetCell = self.getCell(col, row)
-        if targetCell.value != 0:
+        if self.value != 0:
             raise Exception("Cannot set the candidates of a solved Cell")
         newCandidates = [False] * 9
         for value in valueList:
             newCandidates[value-1] = True
-        targetCell.candidates = newCandidates
-        targetCell.numCandidates = len(valueList)
+        self.candidates = newCandidates
+        self.numCandidates = len(valueList)
     # Remove a candidate from a cell
     def removeCandidate(self, candidate: int, strict = False):
         if self.candidates[candidate-1] == True:
