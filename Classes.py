@@ -250,7 +250,7 @@ class Puzzle:
         puzzleString += "\n\n"
         return puzzleString
     # Print the puzzle's cell candidates (Solved cells show their value as all of their candidates)
-    def printPuzzleCandidates(self, printSolved: bool):
+    def printPuzzleCandidates(self, printSolved: bool = False):
         candidateString = ""
         for i in range(27):
             for j in range(9):

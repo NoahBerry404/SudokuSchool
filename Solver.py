@@ -3,6 +3,8 @@ from itertools import combinations
 
 # Recursive Function to Brute Force Solve a Sudoku
 def forceSolve(originalPuzzle: Puzzle, puzzle: Puzzle, unsolvedCells: list[Cell]) -> Puzzle:
+    if len(unsolvedCells) == 0:
+        return puzzle
     cell = unsolvedCells[0]
     cellLocation = (cell.col.groupNum, cell.row.groupNum)
     cellCandidates = cell.getCandidates()
@@ -20,7 +22,6 @@ def forceSolve(originalPuzzle: Puzzle, puzzle: Puzzle, unsolvedCells: list[Cell]
         except:
             if candidate == cellCandidates[-1]:
                     return None
-    return puzzle
     
 # Identifies basic sudoku candidate ineligibility (each group can only have one of each value)
 # Will update puzzle with new found information if solveFlag is True

@@ -40,8 +40,12 @@ def processPuzzle(unsolvedPuzzle: Puzzle):
         forceSolvedPuzzle = forceSolve(puzzle, puzzle, sorted(cellList, key=lambda x: x.numCandidates))
         try:
             file.write(forceSolvedPuzzle.printPuzzle())
+            if forceSolvedPuzzle.validateSolution(unsolvedPuzzle):
+                file.write("Puzzle is Solved.\n")
+            else:
+                file.write("FORCE SOLVE FAILED.\n")
         except:
-            file.write("FORCE SOLVE FAILED")
+            file.write("FORCE SOLVE FAILED.\n")
     file.close()
 
-processPuzzle(testPuzzle3)
+processPuzzle(testPuzzle6)
