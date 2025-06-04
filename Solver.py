@@ -191,7 +191,7 @@ def checkFishes(puzzle: Puzzle, solveFlag: bool) -> list[FishInfo]:
                                 if member.candidates[i] == True and member not in fishCells:
                                     infoDict[member] = [i+1]
                         if infoDict:
-                            information.append(FishInfo(combo, infoDict))
+                            information.append(FishInfo([cols, rows, combo], infoDict))
     if information and solveFlag:
         information[0].processInfo()
     return information

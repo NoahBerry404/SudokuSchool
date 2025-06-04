@@ -453,4 +453,56 @@ class FishInfo(Info):
         for cell in self.results:
             cell.removeCandidate(self.results[cell][0])
     def printInfo(self) -> str:
-        return "FISH INFO: WIP\n"
+        cols: set[Column]
+        cols = self.sources[0]
+        rows: set[Row]
+        rows = self.sources[1]
+        combo: list[list[Cell]]
+        combo = self.sources[2]
+        infoDict: dict[Cell, list[int]]
+        infoDict = self.results
+        infoCells = list(infoDict.keys())
+        infoValue = infoDict[infoCells[0]][0]
+        if infoCells[0].col in cols:
+            infoGroups: list[Column]
+            infoGroups = cols
+            strictGroups: list[Row]
+            strictGroups = rows
+        else:
+            infoGroups: list[Row]
+            infoGroups = rows
+            strictGroups: list[Column]
+            strictGroups = cols
+        match len(combo):
+            case 2:
+                infoString = "X-WING"
+            case 3:
+                infoString = "SWORDFISH"
+            case 4:
+                infoString = "JELLYFISH"
+            case 5:
+                infoString = "SQUIRMBAG"
+            case 6:
+                infoString = "WHALE"
+            case 7:
+                infoString = "LEVIATHAN"
+            case _:
+                infoString = "FISH"
+        infoString += ": There are " + str(len(combo)) + " " + strictGroups[0].printType() + "s"
+        infoString += " where all cells that have " + str(infoValue) + " as a candidate, share the same "
+        infoString += str(len(combo)) + " " + infoGroups[0].printType() + "s\nThis means that the cell"
+        if len(infoCells) > 1:
+            infoString += "s"
+        infoString += " at "
+        i = 0
+        for cell in infoCells:
+            if i != 0:
+                if len(infoCells) > 2:
+                    infoString += ","
+                if i == len(infoCells)-1:
+                    infoString += " and "
+                else:
+                    infoString += " "
+            infoString += cell.printLocation()
+            i += 1
+        infoString += " (column, row) cannot have " + str(infoValue) + " as a candidate."
