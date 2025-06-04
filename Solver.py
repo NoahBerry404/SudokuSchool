@@ -2,46 +2,24 @@ from Classes import *
 from itertools import combinations
 
 # Recursive Function to Brute Force Solve a Sudoku
-def forceSolve(originalPuzzle: Puzzle, puzzle: Puzzle, unsolvedCells: dict[int, list]) -> Puzzle:
-    for i in range(9):
-        for cellLocation in unsolvedCells[i+1]:
-            cell = puzzle.getCell(cellLocation[0], cellLocation[1])
-            newUnsolvedCells = unsolvedCells.copy()
-            newList = newUnsolvedCells[i+1].copy()
-            newList.remove(cellLocation)
-            newUnsolvedCells[i+1] = newList
-            for candidate in cell.getCandidates():
-                # TESTING
-                # for key in unsolvedCells:
-                #     for cell in unsolvedCells[key]:
-                #         if cell.numCandidates != key:
-                #             print("problem!")
-                # END TESTING
-                try:
-                    newPuzzle = puzzle.copyPuzzle()
-                    newCell = newPuzzle.getCell(cellLocation[0], cellLocation[1])
-                    newCell.setValue(candidate)
-                    result = forceSolve(originalPuzzle, newPuzzle, newUnsolvedCells)
-                    if result != None:
-                        return result
-                    else:
-                        try:
-                            cell.removeCandidate(candidate, True)
-                            currentList = unsolvedCells[cell.numCandidates + 1].copy()
-                            currentList.remove(cellLocation)
-                            unsolvedCells[cell.numCandidates + 1] = currentList
-                            unsolvedCells[cell.numCandidates] += [cellLocation]
-                        except:
-                            return None
-                except:
-                    try:
-                        cell.removeCandidate(candidate, True)
-                        newList = unsolvedCells[cell.numCandidates + 1].copy()
-                        newList.remove(cellLocation)
-                        unsolvedCells[cell.numCandidates + 1] = newList
-                        unsolvedCells[cell.numCandidates] += [cellLocation]
-                    except:
-                        return None
+def forceSolve(originalPuzzle: Puzzle, puzzle: Puzzle, unsolvedCells: list[Cell]) -> Puzzle:
+    cell = unsolvedCells[0]
+    cellLocation = (cell.col.groupNum, cell.row.groupNum)
+    cellCandidates = cell.getCandidates()
+    for candidate in cellCandidates:
+        try:
+            newPuzzle = puzzle.copyPuzzle()
+            newCell = newPuzzle.getCell(cellLocation[0], cellLocation[1])
+            newCell.setValue(candidate)
+            result = forceSolve(originalPuzzle, newPuzzle, unsolvedCells[1:])
+            if result != None:
+                return result
+            else:
+                if candidate == cellCandidates[-1]:
+                    return None
+        except:
+            if candidate == cellCandidates[-1]:
+                    return None
     return puzzle
     
 # Identifies basic sudoku candidate ineligibility (each group can only have one of each value)

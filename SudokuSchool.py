@@ -32,14 +32,12 @@ def processPuzzle(unsolvedPuzzle: Puzzle):
         file.write("Puzzle is Solved, Valid Solution = " + str(puzzle.validateSolution(unsolvedPuzzle)) + ".")
     else:
         file.write("Puzzle is not solved, solving remaining using brute force.\n")
-        unsolvedCellDict = {}
-        for i in range(9):
-            unsolvedCellDict[i+1] = []
+        cellList = []
         for row in puzzle.rows:
             for cell in row.members:
                 if cell.value == 0:
-                    unsolvedCellDict[cell.numCandidates] += [(cell.col.groupNum, cell.row.groupNum)]
-        forceSolvedPuzzle = forceSolve(puzzle, puzzle, unsolvedCellDict)
+                    cellList.append(cell)
+        forceSolvedPuzzle = forceSolve(puzzle, puzzle, sorted(cellList, key=lambda x: x.numCandidates))
         try:
             file.write(forceSolvedPuzzle.printPuzzle())
         except:
