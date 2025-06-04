@@ -37,15 +37,19 @@ class Cell:
                 if puzzle.solvedGroups == 27:
                     puzzle.isSolved = True
     # Set a cell's candidates field
-    def setCandidates(self, candidates: list[bool]):
-        count = 0
-        for candidate in candidates:
-            if candidate == True:
-                count += 1
-        if count == 0:
-            raise Exception("No Candidates Passed, use setValue if solving cell")
-        self.numCandidates = count
-        self.candidates = candidates
+    def setCandidates(self, valueList: list[int]):
+        if valueList == []:
+            raise Exception("At least 1 candidate must be provided")
+        if len(valueList) != len(set(valueList)):
+            raise Exception("All candidates must be unique")
+        targetCell = self.getCell(col, row)
+        if targetCell.value != 0:
+            raise Exception("Cannot set the candidates of a solved Cell")
+        newCandidates = [False] * 9
+        for value in valueList:
+            newCandidates[value-1] = True
+        targetCell.candidates = newCandidates
+        targetCell.numCandidates = len(valueList)
     # Remove a candidate from a cell
     def removeCandidate(self, candidate: int, strict = False):
         if self.candidates[candidate-1] == True:
@@ -198,6 +202,9 @@ class Puzzle:
     def setCellValue(self, val: int, col: int, row: int):
         targetCell = self.getCell(col, row)
         targetCell.setValue(val)
+    def setCellCandidates(self, valueList: list[int], col: int, row: int):
+        targetCell = self.getCell(col, row)
+        targetCell.setCandidates(valueList)
     # Makes a copy of a puzzles original values and candidates
     def copyPuzzle(self) -> 'Puzzle':
         newPuzzle = Puzzle()
