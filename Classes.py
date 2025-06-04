@@ -13,6 +13,8 @@ class Cell:
         self.row = row
         # Section that the cell belongs to
         self.sec = section
+        # Location of Cell in Puzzle (Column Num, Row Num)
+        self.location = (column.groupNum, row.groupNum)
     # Set a cell to be solved at the given value
     def setValue(self, value: int):
         if self.value != 0:
@@ -49,6 +51,7 @@ class Cell:
             newCandidates[value-1] = True
         self.candidates = newCandidates
         self.numCandidates = len(valueList)
+        pass
     # Remove a candidate from a cell
     def removeCandidate(self, candidate: int, strict = False):
         if self.candidates[candidate-1] == True:
@@ -216,6 +219,7 @@ class Puzzle:
                 if cell.value != 0:
                     newCell.setValue(cell.value)
                 newCell.candidates = cell.candidates.copy()
+                newCell.numCandidates = cell.numCandidates
         return newPuzzle
     # Checks that a puzzle is a solution of original
     def validateSolution(self, original: 'Puzzle'):

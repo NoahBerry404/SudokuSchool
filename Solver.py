@@ -175,7 +175,6 @@ def checkFishes(puzzle: Puzzle, solveFlag: bool) -> list[FishInfo]:
                 groupType = "row"
             for i in range(9):
                 candCells = candByValue[i]
-                numCandCells = len(candCells)
                 for combo in combinations(candCells, key):
                     cols = set()
                     rows = set()
@@ -185,7 +184,7 @@ def checkFishes(puzzle: Puzzle, solveFlag: bool) -> list[FishInfo]:
                             cols.add(candidateCell.col)
                             rows.add(candidateCell.row)
                             fishCells.append(candidateCell)
-                    if cols == rows and len(cols) == key:
+                    if len(cols) == key and len(rows) == key:
                         infoDict = {}
                         for group in rows if groupType == "col" else cols:
                             for member in group.members:
