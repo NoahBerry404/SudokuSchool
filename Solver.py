@@ -195,3 +195,16 @@ def checkFishes(puzzle: Puzzle, solveFlag: bool) -> list[FishInfo]:
     if information and solveFlag:
         information[0].processInfo()
     return information
+
+def checkYWing(puzzle: Puzzle, solveFlag: bool) -> list[FishInfo]:
+    information = []
+    for row in puzzle.rows:
+        for pivotCell in row.members:
+            if pivotCell.numCandidates != 2:
+                continue
+            pivotCandidates = pivotCell.getCandidates()
+            pivotA = pivotCandidates[0]
+            pivotB = pivotCandidates[1]
+    if information and solveFlag:
+        information[0].processInfo()
+    return information

@@ -68,6 +68,8 @@ class Cell:
             if self.candidates[i] == True:
                 candList.append(i+1)
         return candList
+    def getVisibleCells(self) -> list['Cell']:
+        pass
     # Returns a cell's parent group of the same type as targetGroup
     def getSameGroupType(self, targetGroup: 'Group') -> 'Group':
         match targetGroup.type:
