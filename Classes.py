@@ -13,8 +13,10 @@ class Cell:
         self.row = row
         # Section that the cell belongs to
         self.sec = section
+        # Location of Cell in Puzzle (Column Num, Row Num)
+        self.location = (column.groupNum, row.groupNum)
     # Set a cell to be solved at the given value
-    def setCell(self, value: int):
+    def setValue(self, value: int):
         if self.value != 0:
             raise Exception("Tried to set value of a solved cell")
         if self.candidates[value-1] == False:
@@ -37,15 +39,19 @@ class Cell:
                 if puzzle.solvedGroups == 27:
                     puzzle.isSolved = True
     # Set a cell's candidates field
-    def setCandidates(self, candidates: list[bool]):
-        count = 0
-        for candidate in candidates:
-            if candidate == True:
-                count += 1
-        if count == 0:
-            raise Exception("No Candidates Passed, use setCell if solving cell")
-        self.numCandidates = count
-        self.candidates = candidates
+    def setCandidates(self, valueList: list[int]):
+        if valueList == []:
+            raise Exception("At least 1 candidate must be provided")
+        if len(valueList) != len(set(valueList)):
+            raise Exception("All candidates must be unique")
+        if self.value != 0:
+            raise Exception("Cannot set the candidates of a solved Cell")
+        newCandidates = [False] * 9
+        for value in valueList:
+            newCandidates[value-1] = True
+        self.candidates = newCandidates
+        self.numCandidates = len(valueList)
+        pass
     # Remove a candidate from a cell
     def removeCandidate(self, candidate: int, strict = False):
         if self.candidates[candidate-1] == True:
@@ -55,6 +61,13 @@ class Cell:
             self.numCandidates -= 1
         elif strict:
             raise Exception("Tried to remove nonexistent candidate.")
+    # Returns a Cell's candidates as a list of their values
+    def getCandidates(self) -> list[int]:
+        candList = []
+        for i in range(len(self.candidates)):
+            if self.candidates[i] == True:
+                candList.append(i+1)
+        return candList
     # Returns a cell's parent group of the same type as targetGroup
     def getSameGroupType(self, targetGroup: 'Group') -> 'Group':
         match targetGroup.type:
@@ -190,19 +203,23 @@ class Puzzle:
     # Get a puzzle's cell by column and row and set it to the given value
     def setCellValue(self, val: int, col: int, row: int):
         targetCell = self.getCell(col, row)
-        targetCell.setCell(val)
+        targetCell.setValue(val)
+    def setCellCandidates(self, valueList: list[int], col: int, row: int):
+        targetCell = self.getCell(col, row)
+        targetCell.setCandidates(valueList)
     # Makes a copy of a puzzles original values and candidates
-    def copyPuzzle(target: 'Puzzle') -> 'Puzzle':
+    def copyPuzzle(self) -> 'Puzzle':
         newPuzzle = Puzzle()
         for i in range(9):
-            row = target.rows[i]
+            row = self.rows[i]
             newRow = newPuzzle.rows[i]
             for j in range(9):
                 cell = row.members[j]
                 newCell = newRow.members[j]
                 if cell.value != 0:
-                    newCell.setCell(cell.value)
+                    newCell.setValue(cell.value)
                 newCell.candidates = cell.candidates.copy()
+                newCell.numCandidates = cell.numCandidates
         return newPuzzle
     # Checks that a puzzle is a solution of original
     def validateSolution(self, original: 'Puzzle'):
@@ -243,7 +260,7 @@ class Puzzle:
         puzzleString += "\n\n"
         return puzzleString
     # Print the puzzle's cell candidates (Solved cells show their value as all of their candidates)
-    def printPuzzleCandidates(self, printSolved: bool):
+    def printPuzzleCandidates(self, printSolved: bool = False):
         candidateString = ""
         for i in range(27):
             for j in range(9):
@@ -301,7 +318,7 @@ class SoloCandidateInfo(Info):
         # There will always be only one entry in this dictionary
         cell = list(self.results.keys())[0]
         value = self.results[cell][0]
-        cell.setCell(value)
+        cell.setValue(value)
     def printInfo(self) -> str:
         infoString = ""
         cell = list(self.results.keys())[0]
@@ -315,7 +332,7 @@ class SoleOccurrenceInfo(Info):
         # There will always be only one entry in this dictionary
         cell = list(self.results.keys())[0]
         value = self.results[cell][0]
-        cell.setCell(value)
+        cell.setValue(value)
     def printInfo(self) -> str:
         infoString = ""
         cell = list(self.results.keys())[0]
@@ -429,4 +446,90 @@ class HiddenPairInfo(Info):
             infoString += " as a candidate"
             i += 1
         infoString += ".\n"
+        return infoString
+
+class FishInfo(Info):
+    def processInfo(self):
+        for cell in self.results:
+            cell.removeCandidate(self.results[cell][0])
+    def printInfo(self) -> str:
+        cols: set[Column]
+        cols = self.sources[0]
+        rows: set[Row]
+        rows = self.sources[1]
+        combo: list[list[Cell]]
+        combo = self.sources[2]
+        infoDict: dict[Cell, list[int]]
+        infoDict = self.results
+        infoCells = list(infoDict.keys())
+        infoValue = infoDict[infoCells[0]][0]
+        comboLength = len(combo)
+        if infoCells[0].col in cols:
+            infoGroups: list[Column]
+            infoGroups = sorted(list(cols), key=lambda x: x.groupNum)
+            strictGroups: list[Row]
+            strictGroups = sorted(list(rows), key=lambda x: x.groupNum)
+        else:
+            infoGroups: list[Row]
+            infoGroups = sorted(list(rows), key=lambda x: x.groupNum)
+            strictGroups: list[Column]
+            strictGroups = sorted(list(cols), key=lambda x: x.groupNum)
+        match comboLength:
+            case 2:
+                infoString = "X-WING"
+            case 3:
+                infoString = "SWORDFISH"
+            case 4:
+                infoString = "JELLYFISH"
+            case 5:
+                infoString = "SQUIRMBAG"
+            case 6:
+                infoString = "WHALE"
+            case 7:
+                infoString = "LEVIATHAN"
+            case _:
+                infoString = "FISH"
+        infoString += ": The candidate cells for the value " + str(infoValue) + " in the " + str(comboLength) 
+        infoString += " " + strictGroups[0].printType() + "s: "
+        i = 0
+        for group in strictGroups:
+            if i != 0:
+                if len(strictGroups) > 2:
+                    infoString += ","
+                if i == len(strictGroups)-1:
+                    infoString += " and "
+                else:
+                    infoString += " "
+            infoString += str(group.groupNum)
+            i += 1
+        infoString += ", also share the same " + str(comboLength) + " " + infoGroups[0].printType() + "s: "
+        i = 0
+        for group in infoGroups:
+            if i != 0:
+                if len(infoGroups) > 2:
+                    infoString += ","
+                if i == len(infoGroups)-1:
+                    infoString += " and "
+                else:
+                    infoString += " "
+            infoString += str(group.groupNum)
+            i += 1
+        infoString += ".\n"
+        infoString += "Since all of these candidate cells share the same " + str(comboLength) + " columns and rows, no other cells in these "
+        infoString += "columns and rows can have a value of " + str(infoValue) + ".\nThis means that the cell"
+        if len(infoCells) > 1:
+            infoString += "s"
+        infoString += " at "
+        i = 0
+        for cell in infoCells:
+            if i != 0:
+                if len(infoCells) > 2:
+                    infoString += ","
+                if i == len(infoCells)-1:
+                    infoString += " and "
+                else:
+                    infoString += " "
+            infoString += cell.printLocation()
+            i += 1
+        infoString += " (column, row) cannot have " + str(infoValue) + " as a candidate.\n"
         return infoString

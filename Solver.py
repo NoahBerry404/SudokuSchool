@@ -1,6 +1,28 @@
 from Classes import *
 from itertools import combinations
 
+# Recursive Function to Brute Force Solve a Sudoku
+def forceSolve(originalPuzzle: Puzzle, puzzle: Puzzle, unsolvedCells: list[Cell]) -> Puzzle:
+    if len(unsolvedCells) == 0:
+        return puzzle
+    cell = unsolvedCells[0]
+    cellLocation = (cell.col.groupNum, cell.row.groupNum)
+    cellCandidates = cell.getCandidates()
+    for candidate in cellCandidates:
+        try:
+            newPuzzle = puzzle.copyPuzzle()
+            newCell = newPuzzle.getCell(cellLocation[0], cellLocation[1])
+            newCell.setValue(candidate)
+            result = forceSolve(originalPuzzle, newPuzzle, unsolvedCells[1:])
+            if result != None:
+                return result
+            else:
+                if candidate == cellCandidates[-1]:
+                    return None
+        except:
+            if candidate == cellCandidates[-1]:
+                    return None
+    
 # Identifies basic sudoku candidate ineligibility (each group can only have one of each value)
 # Will update puzzle with new found information if solveFlag is True
 def checkBasic(puzzle: Puzzle, solveFlag: bool) -> list[BasicInfo]:
@@ -124,6 +146,52 @@ def checkHiddenPair(puzzle: Puzzle, solveFlag: bool) -> list[HiddenPairInfo]:
                     infoDict[cell] = invalidValues
             if infoDict:
                 information.append(HiddenPairInfo([group] + combo[0], infoDict))
+    if information and solveFlag:
+        information[0].processInfo()
+    return information
+
+# Checks for when n rows or n columns exclusively have 2 to n cells each with x as a candidate where the cells
+# are all in the same n columns and rows. The name of the strategy is X Wing if n=2, Sword Fish if n=3, etc.
+# Will update puzzle with new found information if solveFlag is True
+def checkFishes(puzzle: Puzzle, solveFlag: bool) -> list[FishInfo]:
+    information = []
+    maxSize = 9 - 2
+    fishDict = {}
+    for size in range(2, maxSize + 1):
+        # First blankCandByValue is for Columns, Second is for Rows
+        fishDict[size] = [[list() for _ in range(9)], [list() for _ in range(9)]]
+    for group in puzzle.cols + puzzle.rows:
+        for i in range(9):
+            candidateCells = group.getCandidateCells(i+1)
+            numCells = len(candidateCells)
+            if numCells > 1 and numCells <= maxSize:
+                for j in range(numCells, maxSize+1):
+                    fishDict[j][0 if group.type == "col" else 1][i].append(candidateCells)
+    for key in range(2, maxSize + 1):
+        for candByValue in fishDict[key]:
+            if candByValue == fishDict[key][0]:
+                groupType = "col"
+            else:
+                groupType = "row"
+            for i in range(9):
+                candCells = candByValue[i]
+                for combo in combinations(candCells, key):
+                    cols = set()
+                    rows = set()
+                    fishCells = []
+                    for groupCandidateCells in combo:
+                        for candidateCell in groupCandidateCells:
+                            cols.add(candidateCell.col)
+                            rows.add(candidateCell.row)
+                            fishCells.append(candidateCell)
+                    if len(cols) == key and len(rows) == key:
+                        infoDict = {}
+                        for group in rows if groupType == "col" else cols:
+                            for member in group.members:
+                                if member.candidates[i] == True and member not in fishCells:
+                                    infoDict[member] = [i+1]
+                        if infoDict:
+                            information.append(FishInfo([cols, rows, combo], infoDict))
     if information and solveFlag:
         information[0].processInfo()
     return information
