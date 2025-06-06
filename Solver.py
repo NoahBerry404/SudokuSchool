@@ -205,6 +205,19 @@ def checkYWing(puzzle: Puzzle, solveFlag: bool) -> list[FishInfo]:
             pivotCandidates = pivotCell.getCandidates()
             pivotA = pivotCandidates[0]
             pivotB = pivotCandidates[1]
+            pairs = {i+1: ([],[]) for i in range(9) if i+1 != pivotA and i+1 != pivotB}
+            for neighbor in pivotCell.getVisibleCells():
+                if neighbor.numCandidates == 2:
+                    candList = neighbor.getCandidates()
+                    if pivotA in candList and pivotB not in candList:
+                        candList.remove(pivotA)
+                        pivotC = candList[0]
+                        pairs[pivotC][0].append(neighbor)
+                    elif pivotB in candList and pivotA not in candList:
+                        candList.remove(pivotB)
+                        pivotC = candList[0]
+                        pairs[pivotC][1].append(neighbor)
+
     if information and solveFlag:
         information[0].processInfo()
     return information

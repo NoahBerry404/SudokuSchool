@@ -68,8 +68,13 @@ class Cell:
             if self.candidates[i] == True:
                 candList.append(i+1)
         return candList
+    # Returns a list of all Cells that share a group with the Cell that calls the method
     def getVisibleCells(self) -> list['Cell']:
-        pass
+        visibleCells = set()
+        for neighbor in self.col.members + self.row.members + self.sec.members:
+            if neighbor != self:
+                visibleCells.add(neighbor)
+        return list(visibleCells)
     # Returns a cell's parent group of the same type as targetGroup
     def getSameGroupType(self, targetGroup: 'Group') -> 'Group':
         match targetGroup.type:
