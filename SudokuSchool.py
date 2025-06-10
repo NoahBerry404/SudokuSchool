@@ -22,6 +22,8 @@ def processPuzzle(unsolvedPuzzle: Puzzle):
         newInfo += hidPairInfo
         fishInfo = checkFishes(puzzle, False)
         newInfo += fishInfo
+        yWingInfo = checkYWing(puzzle, False)
+        newInfo += yWingInfo
         if newInfo != []:
             outputString += newInfo[0].printInfo()
             newInfo[0].processInfo()

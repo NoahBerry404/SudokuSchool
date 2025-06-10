@@ -540,3 +540,10 @@ class FishInfo(Info):
             i += 1
         infoString += " (column, row) cannot have " + str(infoValue) + " as a candidate.\n"
         return infoString
+
+class yWingInfo(Info):
+    def processInfo(self):
+        for cell in self.results:
+            cell.removeCandidate(self.results[cell][0])
+    def printInfo(self) -> str:
+        return "Y-WING: printInfo unfinished.\n"

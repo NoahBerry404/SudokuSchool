@@ -196,6 +196,9 @@ def checkFishes(puzzle: Puzzle, solveFlag: bool) -> list[FishInfo]:
         information[0].processInfo()
     return information
 
+# Checks for situations where a pivot cell with candidates AB can see a cell with candidates AC
+# and a cell with candidates BC. All cells that can see the AC and BC cell cannot have C as a candidate
+# Will update puzzle with new found information if solveFlag is True
 def checkYWing(puzzle: Puzzle, solveFlag: bool) -> list[FishInfo]:
     information = []
     for row in puzzle.rows:
@@ -217,7 +220,22 @@ def checkYWing(puzzle: Puzzle, solveFlag: bool) -> list[FishInfo]:
                         candList.remove(pivotB)
                         pivotC = candList[0]
                         pairs[pivotC][1].append(neighbor)
-
+            for pivotC in pairs:
+                pivotCells = pairs[pivotC]
+                listAC = pivotCells[0]
+                listBC = pivotCells[1]
+                if listAC and listBC:
+                    for cellAC in listAC:
+                        for cellBC in listBC:
+                            infoDict = {}
+                            intersections = set(cellAC.getVisibleCells()) & set(cellBC.getVisibleCells())
+                            for intersectingCell in intersections:
+                                if intersectingCell.candidates[pivotC-1] == True:
+                                    infoDict[intersectingCell] = [pivotC]
+                            if infoDict:
+                                foundPivotCells = [pivotCell, cellAC, cellBC]
+                                foundPivots = [pivotA, pivotB, pivotC]
+                                information.append(yWingInfo([foundPivotCells, foundPivots], infoDict))
     if information and solveFlag:
         information[0].processInfo()
     return information
