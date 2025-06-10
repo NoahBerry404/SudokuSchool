@@ -235,7 +235,7 @@ def checkYWing(puzzle: Puzzle, solveFlag: bool) -> list[FishInfo]:
                             if infoDict:
                                 foundPivotCells = [pivotCell, cellAC, cellBC]
                                 foundPivots = [pivotA, pivotB, pivotC]
-                                information.append(yWingInfo([foundPivotCells, foundPivots], infoDict))
+                                information.append(YWingInfo([foundPivotCells, foundPivots], infoDict))
     if information and solveFlag:
         information[0].processInfo()
     return information

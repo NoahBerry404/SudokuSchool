@@ -1,11 +1,11 @@
 from Solver import *
-from TestPuzzles import testPuzzle1, testPuzzle2, testPuzzle3, testPuzzle4, testPuzzle5, testPuzzle6
+from TestPuzzles import testPuzzle1, testPuzzle2, testPuzzle3, testPuzzle4, testPuzzle5, testPuzzle6, testPuzzle7
 
 def processPuzzle(unsolvedPuzzle: Puzzle):
     puzzle = unsolvedPuzzle.copyPuzzle()
     file = open("SudokuSchoolOutput.txt", 'w')
     file.write("Starting Values:\n" + puzzle.printPuzzle())
-    file.write("Starting Candidates:\n" + puzzle.printPuzzleCandidates())
+    file.write("Starting Candidates:\n" + puzzle.printPuzzleCandidates(True))
     newInfo = [""]
     while newInfo != []:
         outputString = ""
@@ -28,7 +28,7 @@ def processPuzzle(unsolvedPuzzle: Puzzle):
             outputString += newInfo[0].printInfo()
             newInfo[0].processInfo()
             outputString += puzzle.printPuzzle()
-            outputString += puzzle.printPuzzleCandidates(False)
+            outputString += puzzle.printPuzzleCandidates(True)
             outputString += "\n"
             file.write(outputString)
     if puzzle.isSolved:
@@ -65,6 +65,8 @@ match puzzleNum:
         selectedPuzzle = testPuzzle5
     case "6":
         selectedPuzzle = testPuzzle6
+    case "7":
+        selectedPuzzle = testPuzzle7
     case _:
         selectedPuzzle = None
         raise Exception("Invalid Test Puzzle Number")
