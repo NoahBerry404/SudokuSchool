@@ -195,3 +195,47 @@ def checkFishes(puzzle: Puzzle, solveFlag: bool) -> list[FishInfo]:
     if information and solveFlag:
         information[0].processInfo()
     return information
+
+# Checks for situations where a pivot cell with candidates AB can see a cell with candidates AC
+# and a cell with candidates BC. All cells that can see the AC and BC cell cannot have C as a candidate
+# Will update puzzle with new found information if solveFlag is True
+def checkYWing(puzzle: Puzzle, solveFlag: bool) -> list[FishInfo]:
+    information = []
+    for row in puzzle.rows:
+        for pivotCell in row.members:
+            if pivotCell.numCandidates != 2:
+                continue
+            pivotCandidates = pivotCell.getCandidates()
+            pivotA = pivotCandidates[0]
+            pivotB = pivotCandidates[1]
+            pairs = {i+1: ([],[]) for i in range(9) if i+1 != pivotA and i+1 != pivotB}
+            for neighbor in pivotCell.getVisibleCells():
+                if neighbor.numCandidates == 2:
+                    candList = neighbor.getCandidates()
+                    if pivotA in candList and pivotB not in candList:
+                        candList.remove(pivotA)
+                        pivotC = candList[0]
+                        pairs[pivotC][0].append(neighbor)
+                    elif pivotB in candList and pivotA not in candList:
+                        candList.remove(pivotB)
+                        pivotC = candList[0]
+                        pairs[pivotC][1].append(neighbor)
+            for pivotC in pairs:
+                pivotCells = pairs[pivotC]
+                listAC = pivotCells[0]
+                listBC = pivotCells[1]
+                if listAC and listBC:
+                    for cellAC in listAC:
+                        for cellBC in listBC:
+                            infoDict = {}
+                            intersections = set(cellAC.getVisibleCells()) & set(cellBC.getVisibleCells())
+                            for intersectingCell in intersections:
+                                if intersectingCell.candidates[pivotC-1] == True:
+                                    infoDict[intersectingCell] = [pivotC]
+                            if infoDict:
+                                foundPivotCells = [pivotCell, cellAC, cellBC]
+                                foundPivots = [pivotA, pivotB, pivotC]
+                                information.append(YWingInfo([foundPivotCells, foundPivots], infoDict))
+    if information and solveFlag:
+        information[0].processInfo()
+    return information

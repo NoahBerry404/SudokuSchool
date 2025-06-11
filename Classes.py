@@ -68,6 +68,13 @@ class Cell:
             if self.candidates[i] == True:
                 candList.append(i+1)
         return candList
+    # Returns a list of all Cells that share a group with the Cell that calls the method
+    def getVisibleCells(self) -> list['Cell']:
+        visibleCells = set()
+        for neighbor in self.col.members + self.row.members + self.sec.members:
+            if neighbor != self:
+                visibleCells.add(neighbor)
+        return list(visibleCells)
     # Returns a cell's parent group of the same type as targetGroup
     def getSameGroupType(self, targetGroup: 'Group') -> 'Group':
         match targetGroup.type:
@@ -532,4 +539,31 @@ class FishInfo(Info):
             infoString += cell.printLocation()
             i += 1
         infoString += " (column, row) cannot have " + str(infoValue) + " as a candidate.\n"
+        return infoString
+
+class YWingInfo(Info):
+    def processInfo(self):
+        for cell in self.results:
+            cell.removeCandidate(self.results[cell][0])
+    def printInfo(self) -> str:
+        sourceCells = self.sources[0]
+        sourceCandidates = self.sources[1]
+        infoString = "Y-WING: The pivot cell at " + sourceCells[0].printLocation() + " (column, row) forms a Y-Wing with the cells at "
+        infoString += sourceCells[1].printLocation() + " and " + sourceCells[2].printLocation() + ".\nThis means that the cell"
+        numInfoCells = len(self.results)
+        if numInfoCells > 1:
+            infoString += "s"
+        infoString += " at "
+        i = 0
+        for cell in self.results:
+            if i != 0:
+                if numInfoCells > 2:
+                    infoString += ","
+                if i == numInfoCells-1:
+                    infoString += " and "
+                else:
+                    infoString += " "
+            infoString += cell.printLocation()
+            i += 1
+        infoString += " cannot have " + str(sourceCandidates[2]) + " as a candidate.\n"
         return infoString
