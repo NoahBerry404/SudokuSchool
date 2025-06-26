@@ -1,6 +1,37 @@
 from Classes import *
 from itertools import combinations
 
+# Sets up a linked list to represent unmet conditions of the puzzle
+def initializeLinkedList(targetPuzzle: Puzzle) -> DancingNode:
+    groupDict = {}
+    firstHeader = None
+    prevNode = None
+    for group in targetPuzzle.cols + targetPuzzle.rows + targetPuzzle.secs:
+        valueHeaderDict = {}
+        for val in range(9):
+            if group.values[val] == False:
+                newNode = DancingHeaderNode(group, val)
+                if prevNode == None:
+                    firstHeader = newNode
+                else:
+                    prevNode.rowInsert(newNode)
+                valueHeaderDict[val+1] = newNode
+                prevNode = newNode
+        groupDict[group] = valueHeaderDict
+    for row in targetPuzzle.rows:
+        for cell in row.members:
+            prevNode = None
+            if cell.value == 0:
+                for candidate in cell.getCandidates():
+                    for group in [cell.col, cell.row, cell.sec]:
+                        header = groupDict[group][candidate]
+                        newNode = DancingBodyNode(group, candidate, cell, header)
+                        header.colInsert(newNode)
+                        if prevNode != None:
+                            prevNode.rowInsert(newNode)
+                        prevNode = newNode
+    return firstHeader
+
 # Recursive Function to Brute Force Solve a Sudoku
 def forceSolve(originalPuzzle: Puzzle, puzzle: Puzzle, unsolvedCells: list[Cell]) -> Puzzle:
     if len(unsolvedCells) == 0:

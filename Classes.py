@@ -567,3 +567,42 @@ class YWingInfo(Info):
             i += 1
         infoString += " cannot have " + str(sourceCandidates[2]) + " as a candidate.\n"
         return infoString
+
+# Node for use in brute force solving the puzzle using Algorithm X and Dancing Links
+class DancingNode():
+    # Create a blank DancingNode pointing to itself
+    def __init__(self, nodeConditionGroup: Group, nodeConditionValue: int):
+        self.conditionGroup = nodeConditionGroup
+        self.conditionValue = nodeConditionValue
+        self.left = self
+        self.right = self
+        self.up = self
+        self.down = self
+    # Insert newNode right of the calling node
+    def rowInsert(self, newNode: 'DancingNode'):
+        newNode.left = self
+        newNode.right = self.right
+        self.right.left = newNode
+        self.right = newNode
+    # Insert newNode above the calling node
+    def colInsert(self, newNode: 'DancingNode'):
+        newNode.down = self
+        newNode.up = self.up
+        self.up.down = newNode
+        self.up = newNode
+class DancingHeaderNode(DancingNode):
+    def __init__(self, nodeConditionGroup: Group, nodeConditionValue: int):
+        super().__init__(nodeConditionGroup, nodeConditionValue)
+        self.length = 0
+    def colInsert(self, newNode: 'DancingNode'):
+        super().colInsert(newNode)
+        self.length += 1
+class DancingBodyNode(DancingNode):
+    def __init__(self, nodeConditionGroup: Group, nodeConditionValue: int, nodeHeader: DancingHeaderNode, nodeTargetCell: Cell):
+        super().__init__(nodeConditionGroup, nodeConditionValue)
+        self.length = -1
+        self.header = nodeHeader
+        self.targetCell = nodeTargetCell
+    def colInsert(self, newNode: 'DancingNode'):
+        super().colInsert(newNode)
+        self.header.length += 1
