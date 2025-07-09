@@ -3,56 +3,113 @@ from itertools import combinations
 
 # Sets up a linked list to represent unmet conditions of the puzzle
 def initializeLinkedList(targetPuzzle: Puzzle) -> DancingNode:
-    groupDict = {}
     firstHeader = None
     prevNode = None
-    for group in targetPuzzle.cols + targetPuzzle.rows + targetPuzzle.secs:
-        valueHeaderDict = {}
-        for val in range(9):
-            if group.values[val] == False:
-                newNode = DancingHeaderNode(group, val)
+    headerDict = {}
+    for row in targetPuzzle.rows:
+        for cell in row.members:
+            if cell.value == 0:
+                newNode = DancingHeaderNode(cell, -1)
+                headerDict[(cell, -1)] = newNode
                 if prevNode == None:
                     firstHeader = newNode
                 else:
-                    prevNode.rowInsert(newNode)
-                valueHeaderDict[val+1] = newNode
+                    prevNode.rightInsert(newNode)
                 prevNode = newNode
-        groupDict[group] = valueHeaderDict
+    for group in targetPuzzle.cols + targetPuzzle.rows + targetPuzzle.secs:
+        for val in range(9):
+            if group.values[val] == False:
+                newNode = DancingHeaderNode(group, val+1)
+                headerDict[(group, val+1)] = newNode
+                prevNode.rightInsert(newNode)
+                prevNode = newNode
     for row in targetPuzzle.rows:
         for cell in row.members:
-            prevNode = None
             if cell.value == 0:
                 for candidate in cell.getCandidates():
+                    cellColHasVal = cell.col.values[candidate-1]
+                    cellRowHasVal = cell.row.values[candidate-1]
+                    cellSecHasVal = cell.sec.values[candidate-1]
+                    if cellColHasVal or cellRowHasVal or cellSecHasVal:
+                        continue
+                    header = headerDict[(cell, -1)]
+                    prevNode = DancingBodyNode(cell, candidate, header, None)
+                    header.upInsert(prevNode)
                     for group in [cell.col, cell.row, cell.sec]:
-                        header = groupDict[group][candidate]
-                        newNode = DancingBodyNode(group, candidate, cell, header)
-                        header.colInsert(newNode)
-                        if prevNode != None:
-                            prevNode.rowInsert(newNode)
+                        header = headerDict[(group, candidate)]
+                        newNode = DancingBodyNode(group, candidate, header, cell)
+                        header.upInsert(newNode)
+                        prevNode.rightInsert(newNode)
                         prevNode = newNode
     return firstHeader
 
 # Recursive Function to Brute Force Solve a Sudoku
-def forceSolve(originalPuzzle: Puzzle, puzzle: Puzzle, unsolvedCells: list[Cell]) -> Puzzle:
-    if len(unsolvedCells) == 0:
-        return puzzle
-    cell = unsolvedCells[0]
-    cellLocation = (cell.col.groupNum, cell.row.groupNum)
-    cellCandidates = cell.getCandidates()
-    for candidate in cellCandidates:
-        try:
-            newPuzzle = puzzle.copyPuzzle()
-            newCell = newPuzzle.getCell(cellLocation[0], cellLocation[1])
-            newCell.setValue(candidate)
-            result = forceSolve(originalPuzzle, newPuzzle, unsolvedCells[1:])
-            if result != None:
-                return result
+def algorithmX(originalPuzzle: Puzzle, listHeader: DancingHeaderNode) -> Puzzle:
+    minLength = listHeader.length
+    minHeader = listHeader
+    currentHeader = listHeader.right
+    while currentHeader != listHeader:
+        if currentHeader.length < minLength:
+            minLength = currentHeader.length
+            minHeader = currentHeader
+        currentHeader = currentHeader.right
+    currentNode = minHeader.up
+    while currentNode != minHeader:
+        # Prints for Testing
+        # if currentNode.targetCell == None:
+        #     print("Testing setting " + currentNode.condition.printLocation() + " to " + str(currentNode.conditionValue))
+        # else:
+        #     print("Testing setting " + currentNode.targetCell.printLocation() + " to " + str(currentNode.conditionValue))
+        removedRows = []
+        rowTraversalNode = currentNode
+        # Each row should have four nodes
+        for _ in range(4):
+            colTraversalNode = rowTraversalNode.up
+            while colTraversalNode != rowTraversalNode:
+                nextNode = colTraversalNode.up
+                if colTraversalNode.length == -1:
+                    removedRows.insert(0, colTraversalNode)
+                    colTraversalNode.detachRowFromList()
+                colTraversalNode = nextNode
+            rowTraversalNode = rowTraversalNode.right
+        removedRows.insert(0, currentNode)
+        currentNode.detachRowFromList()
+        removedHeaders = []
+        for _ in range(4):
+            headerToRemove = rowTraversalNode.header
+            removedHeaders.insert(0, headerToRemove)
+            if headerToRemove == listHeader:
+                if headerToRemove.right == headerToRemove:
+                    solvedPuzzle = originalPuzzle.copyPuzzle()
+                    originalCell = rowTraversalNode.targetCell
+                    newCell = solvedPuzzle.getCell(originalCell.col.groupNum, originalCell.row.groupNum)
+                    newCell.setValue(rowTraversalNode.conditionValue)
+                    return solvedPuzzle
+                else:
+                    listHeader = headerToRemove.right
+            headerToRemove.detachFromRow()
+            rowTraversalNode = rowTraversalNode.right
+        solvedPuzzle = algorithmX(originalPuzzle, listHeader)
+        if solvedPuzzle != None:
+            if currentNode.targetCell == None:
+                originalCell = currentNode.condition
             else:
-                if candidate == cellCandidates[-1]:
-                    return None
-        except:
-            if candidate == cellCandidates[-1]:
-                    return None
+                originalCell = currentNode.targetCell
+            newCell = solvedPuzzle.getCell(originalCell.col.groupNum, originalCell.row.groupNum)
+            newCell.setValue(currentNode.conditionValue)
+            return solvedPuzzle
+        else:
+            for headerToAdd in removedHeaders:
+                headerToAdd.attachToRow()
+            for rowToAdd in removedRows:
+                rowToAdd.attachRowToList()
+        # Prints for Testing
+        # if currentNode.targetCell == None:
+        #     print("The cell at " + currentNode.condition.printLocation() + " is not " + str(currentNode.conditionValue))
+        # else:
+        #     print("The cell at " + currentNode.targetCell.printLocation() + " is not " + str(currentNode.conditionValue))
+        currentNode = currentNode.up
+    return None
     
 # Identifies basic sudoku candidate ineligibility (each group can only have one of each value)
 # Will update puzzle with new found information if solveFlag is True

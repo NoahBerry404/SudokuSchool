@@ -571,38 +571,97 @@ class YWingInfo(Info):
 # Node for use in brute force solving the puzzle using Algorithm X and Dancing Links
 class DancingNode():
     # Create a blank DancingNode pointing to itself
-    def __init__(self, nodeConditionGroup: Group, nodeConditionValue: int):
-        self.conditionGroup = nodeConditionGroup
+    def __init__(self, nodeCondition: object, nodeConditionValue: int):
+        self.condition = nodeCondition
         self.conditionValue = nodeConditionValue
         self.left = self
         self.right = self
         self.up = self
         self.down = self
-    # Insert newNode right of the calling node
-    def rowInsert(self, newNode: 'DancingNode'):
-        newNode.left = self
-        newNode.right = self.right
-        self.right.left = newNode
-        self.right = newNode
+    # Attaches the calling node to the row
+    def attachToRow(self):
+        self.right.left = self
+        self.left.right = self
+    # Detaches the calling node from the row
+    def detachFromRow(self):
+        self.right.left = self.left
+        self.left.right = self.right
     # Insert newNode above the calling node
-    def colInsert(self, newNode: 'DancingNode'):
+    def upInsert(self, newNode: 'DancingBodyNode'):
         newNode.down = self
         newNode.up = self.up
-        self.up.down = newNode
-        self.up = newNode
+        newNode.attachToCol()
+    # Insert newNode right of the calling node
+    def rightInsert(self, newNode: 'DancingNode'):
+        newNode.left = self
+        newNode.right = self.right
+        newNode.attachToRow()
 class DancingHeaderNode(DancingNode):
-    def __init__(self, nodeConditionGroup: Group, nodeConditionValue: int):
-        super().__init__(nodeConditionGroup, nodeConditionValue)
+    def __init__(self, nodeCondition: object, nodeConditionValue: int):
+        super().__init__(nodeCondition, nodeConditionValue)
         self.length = 0
-    def colInsert(self, newNode: 'DancingNode'):
-        super().colInsert(newNode)
-        self.length += 1
+    # Prints the details of the calling node, will also print the immediate neighbors if printNeighbors is true
+    def printNode(self, printNeighbors = False) -> str:
+        if self.conditionValue == -1:
+            nodeStr = "Header Node of the cell at " + self.condition.printLocation() + " "
+            nodeStr += " with a length of " + str(self.length)
+        else:
+            nodeStr = "Header Node for the value of " + str(self.conditionValue) + " in " + self.condition.type + " "
+            nodeStr += str(self.condition.groupNum) + " with a length of " + str(self.length)
+        if printNeighbors:
+            nodeStr += "\nLeft Node is " + self.left.printNode()
+            nodeStr += "\nRight Node is " + self.right.printNode()
+            nodeStr += "\nUp Node is " + self.up.printNode()
+            nodeStr += "\nDown Node is " + self.down.printNode()
+        return nodeStr
 class DancingBodyNode(DancingNode):
-    def __init__(self, nodeConditionGroup: Group, nodeConditionValue: int, nodeHeader: DancingHeaderNode, nodeTargetCell: Cell):
-        super().__init__(nodeConditionGroup, nodeConditionValue)
+    def __init__(self, nodeCondition: object, nodeConditionValue: int, nodeHeader: DancingHeaderNode, nodeTargetCell: Cell):
+        super().__init__(nodeCondition, nodeConditionValue)
         self.length = -1
         self.header = nodeHeader
         self.targetCell = nodeTargetCell
-    def colInsert(self, newNode: 'DancingNode'):
-        super().colInsert(newNode)
+    # Attaches the calling body node to the column
+    def attachToCol(self):
+        self.up.down = self
+        self.down.up = self
         self.header.length += 1
+    # Detaches the calling body node from the column
+    def detachFromCol(self):
+        self.up.down = self.down
+        self.down.up = self.up
+        self.header.length -= 1
+    # Attaches all nodes in the row to their columns
+    def attachRowToList(self):
+        # Print for Testing
+        # print("Attaching " + self.printNode())
+        self.attachToCol()
+        currentNode = self.right
+        while currentNode != self:
+            # Print for Testing
+            # print("Attaching " + currentNode.printNode())
+            currentNode.attachToCol()
+            currentNode = currentNode.right
+    # Detaches all nodes in the row from their columns
+    def detachRowFromList(self):
+        # Print for Testing
+        # print("Detaching " + self.printNode())
+        self.detachFromCol()
+        currentNode = self.right
+        while currentNode != self:
+            # Print for Testing
+            # print("Detaching " + currentNode.printNode())
+            currentNode.detachFromCol()
+            currentNode = currentNode.right
+    # Prints the details of the calling node, will also print the immediate neighbors if printNeighbors is true
+    def printNode(self, printNeighbors = False) -> str:
+        if self.targetCell == None:
+            nodeStr = "Body Node of the cell at " + self.condition.printLocation() + " for a value of " + str(self.conditionValue)
+        else:
+            nodeStr = "Body Node of the cell at " + self.targetCell.printLocation() + " for a value of "
+            nodeStr += str(self.conditionValue) + " in " + self.condition.type + " " + str(self.condition.groupNum)
+        if printNeighbors:
+            nodeStr += "\nLeft Node is " + self.left.printNode()
+            nodeStr += "\nRight Node is " + self.right.printNode()
+            nodeStr += "\nUp Node is " + self.up.printNode()
+            nodeStr += "\nDown Node is " + self.down.printNode()
+        return nodeStr

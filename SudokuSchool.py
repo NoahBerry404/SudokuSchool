@@ -1,5 +1,5 @@
 from Solver import *
-from TestPuzzles import testPuzzle1, testPuzzle2, testPuzzle3, testPuzzle4, testPuzzle5, testPuzzle6, testPuzzle7
+from TestPuzzles import testPuzzle1, testPuzzle2, testPuzzle3, testPuzzle4, testPuzzle5, testPuzzle6, testPuzzle7, testPuzzle8
 
 def processPuzzle(unsolvedPuzzle: Puzzle):
     puzzle = unsolvedPuzzle.copyPuzzle()
@@ -40,18 +40,19 @@ def processPuzzle(unsolvedPuzzle: Puzzle):
             for cell in row.members:
                 if cell.value == 0:
                     cellList.append(cell)
-        forceSolvedPuzzle = forceSolve(puzzle, puzzle, sorted(cellList, key=lambda x: x.numCandidates))
+        listHead = initializeLinkedList(unsolvedPuzzle)
+        forceSolvedPuzzle = algorithmX(unsolvedPuzzle, listHead)
         try:
             file.write(forceSolvedPuzzle.printPuzzle())
             if forceSolvedPuzzle.validateSolution(unsolvedPuzzle):
                 file.write("Puzzle is Solved.\n")
             else:
-                file.write("FORCE SOLVE FAILED.\n")
+                file.write("Force Solve Failed.\n")
         except:
             file.write("FORCE SOLVE FAILED.\n")
     file.close()
 
-puzzleNum = input("Enter Test Puzzle Number: ")
+puzzleNum = input("Enter Test Puzzle Number (1-8): ")
 match puzzleNum:
     case "1":
         selectedPuzzle = testPuzzle1
@@ -67,8 +68,29 @@ match puzzleNum:
         selectedPuzzle = testPuzzle6
     case "7":
         selectedPuzzle = testPuzzle7
+    case "8":
+        selectedPuzzle = testPuzzle8
     case _:
         selectedPuzzle = None
         raise Exception("Invalid Test Puzzle Number")
-processPuzzle(selectedPuzzle)
-print("Check SudokuSchoolOutput.txt for Results")
+print(selectedPuzzle.printPuzzle())
+stepsRequested = input("Would you like a step by step solution? (yes/no) ").lower().strip()
+if stepsRequested in ["y", "yes"]:
+    processPuzzle(selectedPuzzle)
+    print("Check SudokuSchoolOutput.txt for Results")
+elif stepsRequested in ["n", "no"]:
+    file = open("SudokuSchoolOutput.txt", 'w')
+    startNode = initializeLinkedList(selectedPuzzle)
+    forceSolvedPuzzle = algorithmX(selectedPuzzle, startNode)
+    if forceSolvedPuzzle == None:
+        file.write("FORCE SOLVE FAILED.\n")
+    elif forceSolvedPuzzle.validateSolution(selectedPuzzle):
+        file.write("Puzzle is Solved.\n")
+        file.write(forceSolvedPuzzle.printPuzzle())
+    else:
+        file.write("FORCE SOLVE INCORRECT.\n")
+        file.write(forceSolvedPuzzle.printPuzzle())
+    print("Check SudokuSchoolOutput.txt for Results")
+    file.close()
+else:
+    print("ERROR: Please enter 'yes' or 'no'")
