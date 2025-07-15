@@ -16,24 +16,24 @@ class Cell:
         # Location of Cell in Puzzle (Column Num, Row Num)
         self.location = (column.groupNum, row.groupNum)
     # Set a cell to be solved at the given value
-    def setValue(self, value: int):
-        if self.value != 0:
+    def setValue(self, value: int, isStrict = True):
+        if isStrict and self.value != 0:
             raise Exception("Tried to set value of a solved cell")
-        if self.candidates[value-1] == False:
+        if isStrict and self.candidates[value-1] == False:
             raise Exception("Value must be an eligible candidate")
         self.value = value
         self.candidates = [False] * 9
         self.numCandidates = 0
         for group in [self.col, self.row, self.sec]:
-            if group.values[value-1] == True:
+            if isStrict and group.values[value-1] == True:
                 raise Exception("Group already contains new value")
             group.values[value-1] = True
-            if group.numSolved == 9:
+            if isStrict and group.numSolved == 9:
                 raise Exception("Group is already solved")
             group.numSolved += 1
             if group.numSolved == 9:
                 puzzle = group.puzzle
-                if puzzle.solvedGroups == 27:
+                if isStrict and puzzle.solvedGroups == 27:
                     raise Exception("Puzzle is already solved")
                 puzzle.solvedGroups += 1
                 if puzzle.solvedGroups == 27:
@@ -210,7 +210,7 @@ class Puzzle:
     # Get a puzzle's cell by column and row and set it to the given value
     def setCellValue(self, val: int, col: int, row: int):
         targetCell = self.getCell(col, row)
-        targetCell.setValue(val)
+        targetCell.setValue(val, False)
     def setCellCandidates(self, valueList: list[int], col: int, row: int):
         targetCell = self.getCell(col, row)
         targetCell.setCandidates(valueList)
