@@ -51,7 +51,19 @@ class Cell:
             newCandidates[value-1] = True
         self.candidates = newCandidates
         self.numCandidates = len(valueList)
-        pass
+    # Clear a cell's value
+    def clearValue(self):
+        if self.value != 0:
+            for group in [self.col, self.row, self.sec]:
+                if group.numSolved == 9:
+                    puzzle = group.puzzle
+                    if puzzle.solvedGroups == 27:
+                        puzzle.isSolved = False
+                    puzzle.solvedGroups -= 1
+                group.values[self.value-1] == False
+                group.numSolved -= 1
+        self.value = 0
+        self.setCandidates(range(1,10))
     # Remove a candidate from a cell
     def removeCandidate(self, candidate: int, strict = False):
         if self.candidates[candidate-1] == True:
@@ -208,9 +220,9 @@ class Puzzle:
     def getCell(self, col: int, row: int) -> Cell:
         return self.rows[row-1].members[col-1]
     # Get a puzzle's cell by column and row and set it to the given value
-    def setCellValue(self, val: int, col: int, row: int):
+    def setCellValue(self, val: int, col: int, row: int, isStrict = True):
         targetCell = self.getCell(col, row)
-        targetCell.setValue(val, False)
+        targetCell.setValue(val, isStrict)
     def setCellCandidates(self, valueList: list[int], col: int, row: int):
         targetCell = self.getCell(col, row)
         targetCell.setCandidates(valueList)
@@ -264,7 +276,6 @@ class Puzzle:
                 puzzleString += "| "
             elif currentRow % 3 == 0 and currentCol == 9 and currentRow != 9:
                 puzzleString += "----------------------\n"
-        puzzleString += "\n\n"
         return puzzleString
     # Print the puzzle's cell candidates (Solved cells show their value as all of their candidates)
     def printPuzzleCandidates(self, printSolved: bool = False):
@@ -278,7 +289,6 @@ class Puzzle:
             candidateString += "\n"
             if i % 9 == 8 and i != 26:
                 candidateString += "----------------------------------------------------------\n"
-        candidateString += "\n\n"
         return candidateString
 
 class Info:
@@ -632,24 +642,16 @@ class DancingBodyNode(DancingNode):
         self.header.length -= 1
     # Attaches all nodes in the row to their columns
     def attachRowToList(self):
-        # Print for Testing
-        # print("Attaching " + self.printNode())
         self.attachToCol()
         currentNode = self.right
         while currentNode != self:
-            # Print for Testing
-            # print("Attaching " + currentNode.printNode())
             currentNode.attachToCol()
             currentNode = currentNode.right
     # Detaches all nodes in the row from their columns
     def detachRowFromList(self):
-        # Print for Testing
-        # print("Detaching " + self.printNode())
         self.detachFromCol()
         currentNode = self.right
         while currentNode != self:
-            # Print for Testing
-            # print("Detaching " + currentNode.printNode())
             currentNode.detachFromCol()
             currentNode = currentNode.right
     # Prints the details of the calling node, will also print the immediate neighbors if printNeighbors is true
